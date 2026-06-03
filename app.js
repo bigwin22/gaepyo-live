@@ -255,7 +255,9 @@ function App() {
       setSelectedRaceKey(ALL_RACES);
       setRouteRequest((current) => ({ ...current, regionCode: cityCode, raceSlug: null }));
       const region = regions.find((item) => item.cityCode === cityCode);
-      const election = selectedElection ?? availableElections.find(({ election: item }) => item.code === selectedElectionCode)?.election;
+      const election =
+        selectedElection ??
+        availableElections.find(({ election: item }) => item.code === selectedElectionCode)?.election ?? { code: selectedElectionCode };
       if (region && election) replaceRouteForSelection(region, election, null);
     },
     [availableElections, regions, selectedElection, selectedElectionCode],
