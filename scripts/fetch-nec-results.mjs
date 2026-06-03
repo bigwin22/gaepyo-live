@@ -55,6 +55,7 @@ export async function buildLatestPayload(options = {}) {
   generatedAt = new Date().toISOString();
   runtimeOptions = {
     outputPath: options.outputPath ?? options.photoCachePath ?? "data/latest.json",
+    photoCachePayload: options.photoCachePayload ?? null,
     withPhotos: Boolean(options.withPhotos),
   };
   return options.fixture ? buildFromFixture(options.fixture) : buildFromNec();
@@ -440,7 +441,7 @@ function parseCandidatePhotos(html) {
 async function readPhotoCache(path) {
   const cache = new Map();
   try {
-    const payload = JSON.parse(await readFile(path, "utf8"));
+    const payload = runtimeOptions.photoCachePayload ?? JSON.parse(await readFile(path, "utf8"));
     const races = [
       ...(payload.regions ?? []),
       ...(payload.elections ?? []).flatMap((election) =>
