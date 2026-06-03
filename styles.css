@@ -224,6 +224,22 @@ section,
   color: #5f4848;
 }
 
+.time-chip {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fbfbfa;
+  padding: 0 10px;
+  line-height: 1.25;
+}
+
+.time-chip.checked {
+  color: var(--accent);
+  font-weight: 800;
+}
+
 .broadcast-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -730,6 +746,7 @@ section,
   }
 
   .status-pill,
+  .time-chip,
   .small-button {
     width: 100%;
     justify-content: center;

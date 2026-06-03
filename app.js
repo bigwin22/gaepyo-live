@@ -55,6 +55,8 @@ function App() {
   const [selectedRaceKey, setSelectedRaceKey] = useState(ALL_RACES);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lastCheckedAt, setLastCheckedAt] = useState(null);
+  const [refreshFeedbackUntil, setRefreshFeedbackUntil] = useState(0);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -72,6 +74,9 @@ function App() {
         errors: [error.message],
       });
     } finally {
+      const checkedAt = new Date();
+      setLastCheckedAt(checkedAt.toISOString());
+      setRefreshFeedbackUntil(Date.now() + 4000);
       setLoading(false);
     }
   }, []);
@@ -81,6 +86,13 @@ function App() {
     const timer = window.setInterval(loadData, AUTO_REFRESH_SECONDS * 1000);
     return () => window.clearInterval(timer);
   }, [loadData]);
+
+  useEffect(() => {
+    if (!refreshFeedbackUntil) return undefined;
+    const delay = Math.max(0, refreshFeedbackUntil - Date.now());
+    const timer = window.setTimeout(() => setRefreshFeedbackUntil(0), delay);
+    return () => window.clearTimeout(timer);
+  }, [refreshFeedbackUntil]);
 
   const regions = useMemo(() => dataRegions(data), [data]);
   const elections = useMemo(() => dataElections(data), [data]);
@@ -185,6 +197,8 @@ function App() {
         filter=${filter}
         setFilter=${setFilter}
         loading=${loading}
+        lastCheckedAt=${lastCheckedAt}
+        refreshFeedbackUntil=${refreshFeedbackUntil}
         selectedElectionCode=${selectedElectionCode}
         selectedRaceKey=${selectedRaceKey}
         chooseRegion=${chooseRegion}
@@ -263,6 +277,8 @@ function ResultsSection({
   filter,
   setFilter,
   loading,
+  lastCheckedAt,
+  refreshFeedbackUntil,
   selectedElectionCode,
   selectedRaceKey,
   chooseRegion,
@@ -271,6 +287,7 @@ function ResultsSection({
   loadData,
 }) {
   const label = statusLabel(data);
+  const showRefreshDone = !loading && Date.now() < refreshFeedbackUntil;
 
   return html`
     <section aria-labelledby="results-title">
@@ -278,9 +295,10 @@ function ResultsSection({
         <h2 id="results-title">개표 상황</h2>
         <div className="status-row">
           <span className=${`status-pill ${label.className}`}>${label.text} · 자동 갱신 중</span>
-          <span>${formatGeneratedAt(data?.generatedAt)}</span>
+          <span className="time-chip">데이터 생성 ${formatGeneratedAt(data?.generatedAt)}</span>
+          <span className="time-chip checked">마지막 확인 ${formatCheckedAt(lastCheckedAt)}</span>
           <button className="small-button" type="button" disabled=${loading} onClick=${loadData}>
-            ${loading ? "갱신 중" : "지금 갱신"}
+            ${loading ? "갱신 중" : showRefreshDone ? "확인 완료" : "지금 갱신"}
           </button>
         </div>
       </div>
@@ -593,7 +611,13 @@ function isStale(isoValue) {
 function formatGeneratedAt(value) {
   if (!value) return "업데이트 대기";
   const time = new Date(value);
-  return Number.isNaN(time.getTime()) ? "업데이트 시각 확인 불가" : `${time.toLocaleString("ko-KR")} 기준`;
+  return Number.isNaN(time.getTime()) ? "시각 확인 불가" : `${time.toLocaleString("ko-KR")} 기준`;
+}
+
+function formatCheckedAt(value) {
+  if (!value) return "대기";
+  const time = new Date(value);
+  return Number.isNaN(time.getTime()) ? "시각 확인 불가" : time.toLocaleTimeString("ko-KR");
 }
 
 function formatNumber(value) {
