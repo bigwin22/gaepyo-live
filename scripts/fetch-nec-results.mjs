@@ -42,6 +42,7 @@ const ELECTION_TYPES = [
 ];
 
 const CONCURRENCY_LIMIT = 8;
+const koreanSorter = new Intl.Collator("ko-KR", { sensitivity: "base", numeric: true });
 
 let generatedAt = new Date().toISOString();
 let runtimeOptions = {
@@ -179,7 +180,7 @@ async function collectElection(electionType, errors, warnings, photoCache) {
     regionMap.set(task.city.code, existing);
   }
 
-  let regions = CITY_CODES.map((city) => regionMap.get(city.code)).filter(Boolean);
+  let regions = sortByKoreanName([...regionMap.values()], (region) => region.cityName ?? region.name);
 
   if (electionType.primary && runtimeOptions.withPhotos) {
     const photoEntries = await mapLimit(regions, CONCURRENCY_LIMIT, async (region) => {
@@ -215,7 +216,10 @@ async function collectElection(electionType, errors, warnings, photoCache) {
     scope: electionType.scope,
     regionCount: regions.length,
     raceCount: regions.reduce((sum, region) => sum + region.races.length, 0),
-    regions,
+    regions: regions.map((region) => ({
+      ...region,
+      races: sortByKoreanName(region.races, raceDisplayName),
+    })),
   };
 }
 
@@ -389,7 +393,7 @@ function parseVccp09Races(html, context) {
 
     const rateRow = rows[index + 1] ?? [];
     const parsed = buildRaceFromRows(candidateRow, cells, rateRow, context);
-    if (parsed) {
+    if (parsed && !isSubtotalRace(parsed)) {
       races.push(parsed);
       index += 1;
     }
@@ -597,18 +601,25 @@ function buildUnitName(candidateRow, resultRow, electorateIndex, context) {
   return context.areaName || context.cityName;
 }
 
+function isSubtotalRace(race) {
+  return race.unitName?.replace(/\s+/g, "") === "소계";
+}
+
 function getSummaryRegions(elections, code) {
   const election = elections.find((item) => item.code === code);
   if (!election) return [];
-  return election.regions
-    .map((region) => {
-      const summaryRace =
-        region.races.find((race) => race.unitName === "합계") ??
-        region.races.find((race) => race.totalVotes > 0 || race.countingRate > 0) ??
-        region.races[0];
-      return summaryRace ? { ...summaryRace } : null;
-    })
-    .filter(Boolean);
+  return sortByKoreanName(
+    election.regions
+      .map((region) => {
+        const summaryRace =
+          region.races.find((race) => race.unitName === "합계") ??
+          region.races.find((race) => race.totalVotes > 0 || race.countingRate > 0) ??
+          region.races[0];
+        return summaryRace ? { ...summaryRace } : null;
+      })
+      .filter(Boolean),
+    (region) => region.cityName ?? region.name,
+  );
 }
 
 function buildPayload({ status, regions, educationRegions = [], elections = [], errors, warnings = [] }) {
@@ -712,6 +723,14 @@ function candidateKey(name, party) {
 
 function normalizeKey(value) {
   return String(value ?? "").replace(/\s+/g, "").trim();
+}
+
+function sortByKoreanName(items, getName) {
+  return [...items].sort((a, b) => koreanSorter.compare(String(getName(a) ?? ""), String(getName(b) ?? "")));
+}
+
+function raceDisplayName(race) {
+  return race.unitName ?? race.areaName ?? race.cityName ?? "";
 }
 
 function toPhotoUrl(value) {

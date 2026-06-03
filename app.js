@@ -55,6 +55,7 @@ const STATIC_ENDPOINT = "./data/latest.json";
 const LOCAL_DATA_CACHE_KEY = "gaepyo-live:last-payload";
 const DATA_CACHE_BUCKET_MS = 60 * 1000;
 const LIVE_FETCH_TIMEOUT_MS = 55000;
+const koreanSorter = new Intl.Collator("ko-KR", { sensitivity: "base", numeric: true });
 
 function App() {
   const [data, setData] = useState(null);
@@ -110,6 +111,7 @@ function App() {
 
   const regions = useMemo(() => dataRegions(data), [data]);
   const elections = useMemo(() => dataElections(data), [data]);
+  const normalizedFilter = useMemo(() => normalizeSearchText(filter), [filter]);
 
   useEffect(() => {
     if (!regions.length) return;
@@ -155,18 +157,25 @@ function App() {
     [selectedElection, selectedRegion],
   );
 
-  const races = electionRegion?.races ?? [];
+  const races = useMemo(
+    () => (electionRegion?.races ?? []).filter((race) => !isSubtotalRace(race)),
+    [electionRegion],
+  );
+  const matchingRaces = useMemo(() => {
+    if (!normalizedFilter) return races;
+    return races.filter((race) => matchesRaceSearch(race, normalizedFilter));
+  }, [normalizedFilter, races]);
 
   useEffect(() => {
     if (selectedRaceKey === ALL_RACES) return;
-    if (races.some((race) => race.raceKey === selectedRaceKey)) return;
+    if (matchingRaces.some((race) => race.raceKey === selectedRaceKey)) return;
     setSelectedRaceKey(ALL_RACES);
-  }, [races, selectedRaceKey]);
+  }, [matchingRaces, selectedRaceKey]);
 
   const visibleRaces = useMemo(() => {
-    if (selectedRaceKey === ALL_RACES) return races;
-    return races.filter((race) => race.raceKey === selectedRaceKey);
-  }, [races, selectedRaceKey]);
+    if (selectedRaceKey === ALL_RACES) return matchingRaces;
+    return matchingRaces.filter((race) => race.raceKey === selectedRaceKey);
+  }, [matchingRaces, selectedRaceKey]);
 
   const chooseRegion = useCallback((cityCode) => {
     setSelectedCode(cityCode);
@@ -181,9 +190,9 @@ function App() {
   const submitSearch = useCallback(
     (event) => {
       event.preventDefault();
-      const first = regions.find((region) =>
-        `${region.cityName} ${region.shortName}`.toLowerCase().includes(filter.trim().toLowerCase()),
-      );
+      const query = normalizeSearchText(filter);
+      if (!query) return;
+      const first = regions.find((region) => matchesRegionSearch(region, query));
       if (first) chooseRegion(first.cityCode);
     },
     [chooseRegion, filter, regions],
@@ -207,6 +216,7 @@ function App() {
         selectedElection=${selectedElection}
         availableElections=${availableElections}
         races=${races}
+        matchingRaces=${matchingRaces}
         visibleRaces=${visibleRaces}
         filter=${filter}
         setFilter=${setFilter}
@@ -238,7 +248,7 @@ function Header({ filter, setFilter, submitSearch }) {
             id="region-input"
             name="region"
             type="search"
-            placeholder="예: 서울, 경기, 부산"
+            placeholder="예: 서울, 경기, 안산"
             value=${filter}
             onInput=${(event) => setFilter(event.currentTarget.value)}
           />
@@ -289,6 +299,7 @@ function ResultsSection({
   selectedElection,
   availableElections,
   races,
+  matchingRaces,
   visibleRaces,
   filter,
   setFilter,
@@ -327,7 +338,7 @@ function ResultsSection({
         />
         <${DetailSelector}
           selectedElection=${selectedElection}
-          races=${races}
+          races=${matchingRaces}
           selectedRaceKey=${selectedRaceKey}
           setSelectedRaceKey=${setSelectedRaceKey}
         />
@@ -343,9 +354,10 @@ function ResultsSection({
         <${RacePanel}
           selectedRegion=${selectedRegion}
           selectedElection=${selectedElection}
-          races=${races}
+          races=${matchingRaces}
           visibleRaces=${visibleRaces}
           selectedRaceKey=${selectedRaceKey}
+          filter=${filter}
         />
       </div>
     </section>
@@ -421,10 +433,8 @@ function DetailSelector({ selectedElection, races, selectedRaceKey, setSelectedR
 }
 
 function RegionList({ regions, selectedCode, filter, setFilter, chooseRegion }) {
-  const normalizedFilter = filter.trim().toLowerCase();
-  const visibleRegions = regions.filter((region) =>
-    `${region.cityName} ${region.shortName}`.toLowerCase().includes(normalizedFilter),
-  );
+  const normalizedFilter = normalizeSearchText(filter);
+  const visibleRegions = regions.filter((region) => matchesRegionSearch(region, normalizedFilter));
 
   return html`
     <aside className="region-list" aria-label="지역 선택">
@@ -453,12 +463,13 @@ function RegionList({ regions, selectedCode, filter, setFilter, chooseRegion }) 
   `;
 }
 
-function RacePanel({ selectedRegion, selectedElection, races, visibleRaces, selectedRaceKey }) {
+function RacePanel({ selectedRegion, selectedElection, races, visibleRaces, selectedRaceKey, filter }) {
   if (!selectedRegion && !races.length) {
     return html`<div className="race-panel"><p className="muted">지역 데이터가 아직 없습니다.</p></div>`;
   }
 
   if (!races.length) {
+    const query = filter.trim();
     return html`
       <div className="race-panel">
         <div className="race-heading">
@@ -467,7 +478,11 @@ function RacePanel({ selectedRegion, selectedElection, races, visibleRaces, sele
             <h3>${selectedRegion?.cityName ?? "선택 지역"}</h3>
           </div>
         </div>
-        <p className="notice">이 지역의 해당 선거종류 개표 데이터가 아직 없습니다.</p>
+        <p className="notice">
+          ${query
+            ? `"${query}"에 맞는 세부 지역이 이 선거종류에는 없습니다. 다른 선거종류 탭도 확인해 보세요.`
+            : "이 지역의 해당 선거종류 개표 데이터가 아직 없습니다."}
+        </p>
       </div>
     `;
   }
@@ -570,12 +585,47 @@ function OfficialLinks() {
 
 function dataRegions(data) {
   const regions = data?.regions?.length ? data.regions : fallbackRegions;
-  return regions.map((region) => ({
-    ...region,
-    cityName: region.cityName ?? region.name,
-    shortName: region.shortName ?? region.cityName ?? region.name,
-    candidates: region.candidates ?? [],
-  }));
+  const searchTextByCityCode = buildRegionSearchTextByCityCode(data);
+  return sortByKoreanName(
+    regions.map((region) => ({
+      ...region,
+      cityName: region.cityName ?? region.name,
+      shortName: region.shortName ?? region.cityName ?? region.name,
+      candidates: region.candidates ?? [],
+      searchText: searchTextByCityCode.get(region.cityCode) ?? "",
+    })),
+    (region) => region.cityName,
+  );
+}
+
+function buildRegionSearchTextByCityCode(data) {
+  const searchTextByCityCode = new Map();
+
+  for (const election of data?.elections ?? []) {
+    for (const region of election.regions ?? []) {
+      appendRegionSearchText(searchTextByCityCode, region.cityCode, [
+        election.name,
+        election.shortName,
+        region.cityName,
+        region.shortName,
+        region.name,
+      ]);
+
+      for (const race of region.races ?? []) {
+        appendRegionSearchText(searchTextByCityCode, region.cityCode, raceSearchParts(race));
+      }
+    }
+  }
+
+  return searchTextByCityCode;
+}
+
+function appendRegionSearchText(searchTextByCityCode, cityCode, parts) {
+  if (!cityCode) return;
+  const nextText = normalizeSearchText(parts.filter(Boolean).join(" "));
+  if (!nextText) return;
+  const previousText = searchTextByCityCode.get(cityCode);
+  searchTextByCityCode.set(cityCode, previousText ? `${previousText} ${nextText}` : nextText);
 }
 
 async function fetchLatestData({ onCachedPayload } = {}) {
@@ -687,7 +737,18 @@ function isGitHubPagesHost() {
 }
 
 function dataElections(data) {
-  if (data?.elections?.length) return data.elections;
+  if (data?.elections?.length) {
+    return data.elections.map((election) => ({
+      ...election,
+      regions: sortByKoreanName(
+        (election.regions ?? []).map((region) => ({
+          ...region,
+          races: sortByKoreanName(region.races ?? [], raceDisplayName),
+        })),
+        (region) => region.cityName ?? region.name,
+      ),
+    }));
+  }
 
   const regions = data?.regions?.length ? data.regions : [];
   if (!regions.length) return [];
@@ -699,14 +760,53 @@ function dataElections(data) {
       shortName: "시도지사",
       regionCount: regions.length,
       raceCount: regions.length,
-      regions: regions.map((region) => ({
-        cityCode: region.cityCode,
-        cityName: region.cityName ?? region.name,
-        shortName: region.shortName ?? region.cityName ?? region.name,
-        races: [region],
-      })),
+      regions: sortByKoreanName(
+        regions.map((region) => ({
+          cityCode: region.cityCode,
+          cityName: region.cityName ?? region.name,
+          shortName: region.shortName ?? region.cityName ?? region.name,
+          races: [region],
+        })),
+        (region) => region.cityName,
+      ),
     },
   ];
+}
+
+function sortByKoreanName(items, getName) {
+  return [...items].sort((a, b) => koreanSorter.compare(String(getName(a) ?? ""), String(getName(b) ?? "")));
+}
+
+function raceDisplayName(race) {
+  return race.unitName ?? race.areaName ?? race.cityName ?? "";
+}
+
+function raceSearchParts(race) {
+  return [
+    race.cityName,
+    race.shortName,
+    race.areaName,
+    race.unitName,
+    race.electionName,
+    race.electionShortName,
+    race.raceKey,
+  ];
+}
+
+function normalizeSearchText(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function matchesRegionSearch(region, normalizedQuery) {
+  if (!normalizedQuery) return true;
+  return normalizeSearchText([region.cityName, region.shortName, region.name, region.searchText].filter(Boolean).join(" ")).includes(
+    normalizedQuery,
+  );
+}
+
+function matchesRaceSearch(race, normalizedQuery) {
+  if (!normalizedQuery) return true;
+  return normalizeSearchText(raceSearchParts(race).filter(Boolean).join(" ")).includes(normalizedQuery);
 }
 
 function hasRaceData(region) {
@@ -758,6 +858,10 @@ function formatNumber(value) {
 
 function formatRate(value) {
   return `${Number(value || 0).toFixed(2)}%`;
+}
+
+function isSubtotalRace(race) {
+  return race?.unitName?.replace(/\s+/g, "") === "소계";
 }
 
 function partyColor(party = "") {

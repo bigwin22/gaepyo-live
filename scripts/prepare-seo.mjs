@@ -7,6 +7,7 @@ const INDEX_PATH = "index.html";
 const SITEMAP_PATH = "sitemap.xml";
 const SEO_START = "<!-- SEO_FALLBACK_START -->";
 const SEO_END = "<!-- SEO_FALLBACK_END -->";
+const koreanSorter = new Intl.Collator("ko-KR", { sensitivity: "base", numeric: true });
 
 const data = JSON.parse(await readFile(DATA_PATH, "utf8"));
 const summary = buildSummary(data);
@@ -18,7 +19,7 @@ function buildSummary(payload) {
   const generatedAt = parseDate(payload.generatedAt);
   const modifiedIso = generatedAt.toISOString();
   const modifiedKst = formatKstDateTime(generatedAt);
-  const regions = Array.isArray(payload.regions) ? payload.regions : [];
+  const regions = sortByKoreanName(Array.isArray(payload.regions) ? payload.regions : [], (region) => region.cityName);
   const regionLeaders = regions
     .filter((region) => region?.cityName)
     .map((region) => ({
@@ -317,6 +318,10 @@ function statusText(status) {
   if (status === "error") return "공식 데이터 연결 실패";
   if (status === "empty") return "공식 데이터 대기";
   return "데이터 갱신 중";
+}
+
+function sortByKoreanName(items, getName) {
+  return [...items].sort((a, b) => koreanSorter.compare(String(getName(a) ?? ""), String(getName(b) ?? "")));
 }
 
 function escapeAttr(value) {
