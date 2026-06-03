@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 
 const SITE_URL = "https://vote.gubiko.com/";
 const OG_IMAGE_URL = `${SITE_URL}assets/og-image.png`;
@@ -8,12 +8,44 @@ const SITEMAP_PATH = "sitemap.xml";
 const SEO_START = "<!-- SEO_FALLBACK_START -->";
 const SEO_END = "<!-- SEO_FALLBACK_END -->";
 const koreanSorter = new Intl.Collator("ko-KR", { sensitivity: "base", numeric: true });
+const REGION_SLUGS = {
+  "1100": "seoul",
+  "2600": "busan",
+  "2700": "daegu",
+  "2800": "incheon",
+  "2900": "gwangju",
+  "3000": "daejeon",
+  "3100": "ulsan",
+  "5100": "sejong",
+  "4100": "gyeonggi",
+  "5200": "gangwon",
+  "4300": "chungbuk",
+  "4400": "chungnam",
+  "5300": "jeonbuk",
+  "4600": "jeonnam",
+  "4700": "gyeongbuk",
+  "4800": "gyeongnam",
+  "4900": "jeju",
+};
+const ELECTION_SLUGS = {
+  2: "assembly",
+  3: "governor",
+  4: "mayor",
+  5: "province-council",
+  6: "local-council",
+  8: "province-pr",
+  9: "local-pr",
+  11: "education",
+};
 
 const data = JSON.parse(await readFile(DATA_PATH, "utf8"));
 const summary = buildSummary(data);
+const routePages = buildRoutePages(data, summary);
+const rootIndexHtml = updateIndex(await readFile(INDEX_PATH, "utf8"), data, summary);
 
-await writeFile(INDEX_PATH, updateIndex(await readFile(INDEX_PATH, "utf8"), data, summary));
-await writeFile(SITEMAP_PATH, buildSitemap(summary.modifiedIso));
+await writeFile(INDEX_PATH, rootIndexHtml);
+await writeRoutePages(rootIndexHtml, routePages);
+await writeFile(SITEMAP_PATH, buildSitemap(summary.modifiedIso, data));
 
 function buildSummary(payload) {
   const generatedAt = parseDate(payload.generatedAt);
@@ -209,6 +241,123 @@ function buildFallbackHtml(page) {
       ${SEO_END}`;
 }
 
+function buildRoutePages(payload, summary) {
+  const pages = [];
+  for (const election of Array.isArray(payload.elections) ? payload.elections : []) {
+    const electionSlug = ELECTION_SLUGS[election?.code];
+    if (!electionSlug) continue;
+    for (const region of Array.isArray(election.regions) ? election.regions : []) {
+      const regionSlug = REGION_SLUGS[region?.cityCode];
+      const races = Array.isArray(region.races) ? region.races.filter((race) => !isSubtotalRace(race)) : [];
+      if (!regionSlug || !races.length) continue;
+      const regionSummary = payload.regions?.find((item) => item.cityCode === region.cityCode) ?? region;
+      const path = `/region/${regionSlug}/election/${electionSlug}`;
+      const title = `${region.cityName} ${election.shortName ?? election.name} 실시간 개표율 | 개표라이브`;
+      const leader = regionSummary?.leader?.name
+        ? `${regionSummary.leader.party ? `${regionSummary.leader.party} ` : ""}${regionSummary.leader.name} ${formatRate(regionSummary.leader.rate)}`
+        : "후보 우세율 집계 중";
+      const description = `${summary.modifiedKst} 기준 ${region.cityName} ${election.shortName ?? election.name} 개표 상황입니다. 개표율 ${formatRate(regionSummary?.countingRate)}, ${leader}. 선관위 공식 개표 데이터를 1분마다 확인합니다.`;
+      pages.push({
+        path,
+        url: `${SITE_URL}${path.replace(/^\//, "")}`,
+        title,
+        description,
+        fallback: buildRouteFallbackHtml({
+          title,
+          description,
+          region,
+          election,
+          races,
+          summary,
+        }),
+      });
+    }
+  }
+  return pages.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+function buildRouteFallbackHtml({ title, description, region, election, races, summary }) {
+  const raceItems = races
+    .slice(0, 60)
+    .map((race) => {
+      const leader = race.leader?.name
+        ? `${race.leader.party ? `${race.leader.party} ` : ""}${race.leader.name} ${formatRate(race.leader.rate)}`
+        : "후보 우세율 집계 중";
+      return `
+          <li>
+            <strong>${escapeHtml(race.unitName ?? race.areaName ?? region.cityName)}</strong>
+            <span>개표율 ${escapeHtml(formatRate(race.countingRate))} · ${escapeHtml(leader)}</span>
+          </li>`;
+    })
+    .join("");
+
+  return `
+      ${SEO_START}
+      <main class="seo-shell" data-static-seo>
+        <p class="seo-kicker">2026.06.03 제9회 전국동시지방선거</p>
+        <h1>${escapeHtml(title)}</h1>
+        <p class="seo-lead">${escapeHtml(description)}</p>
+        <section class="seo-summary" aria-labelledby="seo-route-summary-title">
+          <h2 id="seo-route-summary-title">${escapeHtml(region.cityName)} ${escapeHtml(election.shortName ?? election.name)} 선거구별 개표</h2>
+          <ol class="seo-list">${raceItems}</ol>
+        </section>
+        <p class="seo-official">
+          데이터 기준 ${escapeHtml(summary.modifiedKst)} · 공식 원문은 <a href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&amp;topMenuId=VC&amp;secondMenuId=VCCP09">중앙선거관리위원회 개표진행상황</a>에서 확인할 수 있습니다.
+        </p>
+      </main>
+      ${SEO_END}`;
+}
+
+async function writeRoutePages(baseHtml, pages) {
+  await rm("region", { recursive: true, force: true });
+  for (const page of pages) {
+    const filePath = `${page.path.replace(/^\/|\/$/g, "")}/index.html`;
+    await mkdir(filePath.split("/").slice(0, -1).join("/"), { recursive: true });
+    await writeFile(filePath, updateRouteIndex(baseHtml, page));
+  }
+}
+
+function updateRouteIndex(html, page) {
+  let next = html;
+  next = next.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(page.title)}</title>`);
+  next = replaceMetaName(next, "description", page.description);
+  next = replaceOrInsertMetaProperty(next, "og:title", page.title);
+  next = replaceOrInsertMetaProperty(next, "og:description", page.description);
+  next = replaceOrInsertMetaProperty(next, "og:url", page.url);
+  next = replaceOrInsertMetaName(next, "twitter:title", page.title);
+  next = replaceOrInsertMetaName(next, "twitter:description", page.description);
+  next = replaceOrInsertLink(next, "canonical", page.url);
+  next = replaceJsonLd(next, buildRouteStructuredData(page));
+  next = replaceFallback(next, page.fallback);
+  return normalizeHeadOrder(next);
+}
+
+function buildRouteStructuredData(page) {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": `${page.url}#webpage`,
+        url: page.url,
+        name: page.title,
+        description: page.description,
+        isPartOf: { "@id": `${SITE_URL}#website` },
+        inLanguage: "ko-KR",
+        datePublished: "2026-06-03",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${page.url}#breadcrumb`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "개표라이브", item: SITE_URL },
+          { "@type": "ListItem", position: 2, name: page.title, item: page.url },
+        ],
+      },
+    ],
+  };
+}
+
 function replaceFallback(html, fallback) {
   if (html.includes(SEO_START) && html.includes(SEO_END)) {
     return html.replace(new RegExp(`${escapeRegExp(SEO_START)}[\\s\\S]*?${escapeRegExp(SEO_END)}`), fallback.trim());
@@ -275,7 +424,19 @@ function metaNameTag(name, content) {
   return `<meta name="${name}" content="${escapeAttr(content)}" />`;
 }
 
-function buildSitemap(lastModified) {
+function buildSitemap(lastModified, payload) {
+  const routeUrls = buildSitemapRoutes(payload);
+  const routeItems = routeUrls
+    .map(
+      (url) => `  <url>
+    <loc>${escapeHtml(url)}</loc>
+    <lastmod>${lastModified}</lastmod>
+    <changefreq>always</changefreq>
+    <priority>0.8</priority>
+  </url>`,
+    )
+    .join("\n");
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -284,8 +445,29 @@ function buildSitemap(lastModified) {
     <changefreq>always</changefreq>
     <priority>1.0</priority>
   </url>
+${routeItems}
 </urlset>
 `;
+}
+
+function buildSitemapRoutes(payload) {
+  const urls = new Set();
+  for (const election of Array.isArray(payload.elections) ? payload.elections : []) {
+    const electionSlug = ELECTION_SLUGS[election?.code];
+    if (!electionSlug) continue;
+    for (const region of Array.isArray(election.regions) ? election.regions : []) {
+      const regionSlug = REGION_SLUGS[region?.cityCode];
+      if (!regionSlug || !Array.isArray(region.races) || !region.races.some((race) => !isSubtotalRace(race))) continue;
+      urls.add(`${SITE_URL}region/${regionSlug}/election/${electionSlug}`);
+    }
+  }
+  return [...urls].sort();
+}
+
+function isSubtotalRace(race) {
+  const key = String(race?.raceKey ?? "");
+  const unit = String(race?.unitName ?? race?.areaName ?? "");
+  return key.includes("subtotal") || unit.includes("소계") || unit.includes("합계");
 }
 
 function parseDate(value) {
