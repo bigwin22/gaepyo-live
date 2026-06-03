@@ -49,13 +49,44 @@ const fallbackRegions = [
 
 const AUTO_REFRESH_SECONDS = 60;
 const ALL_RACES = "__all__";
-const LIVE_ENDPOINT = "./api/latest";
-const LIVE_REFRESH_ENDPOINT = "./api/latest?live=1";
-const STATIC_ENDPOINT = "./data/latest.json";
+const LIVE_ENDPOINT = "/api/latest";
+const LIVE_REFRESH_ENDPOINT = "/api/latest?live=1";
+const STATIC_ENDPOINT = "/data/latest.json";
 const LOCAL_DATA_CACHE_KEY = "gaepyo-live:last-payload";
 const DATA_CACHE_BUCKET_MS = 60 * 1000;
 const LIVE_FETCH_TIMEOUT_MS = 55000;
 const koreanSorter = new Intl.Collator("ko-KR", { sensitivity: "base", numeric: true });
+const REGION_SLUGS = {
+  "1100": "seoul",
+  "2600": "busan",
+  "2700": "daegu",
+  "2800": "incheon",
+  "2900": "gwangju",
+  "3000": "daejeon",
+  "3100": "ulsan",
+  "5100": "sejong",
+  "4100": "gyeonggi",
+  "5200": "gangwon",
+  "4300": "chungbuk",
+  "4400": "chungnam",
+  "5300": "jeonbuk",
+  "4600": "jeonnam",
+  "4700": "gyeongbuk",
+  "4800": "gyeongnam",
+  "4900": "jeju",
+};
+const ELECTION_SLUGS = {
+  2: "assembly",
+  3: "governor",
+  4: "mayor",
+  5: "province-council",
+  6: "local-council",
+  8: "province-pr",
+  9: "local-pr",
+  11: "education",
+};
+const REGION_CODES_BY_SLUG = invertRecord(REGION_SLUGS);
+const ELECTION_CODES_BY_SLUG = invertRecord(ELECTION_SLUGS);
 
 function App() {
   const [data, setData] = useState(null);
@@ -66,6 +97,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [lastCheckedAt, setLastCheckedAt] = useState(null);
   const [refreshFeedbackUntil, setRefreshFeedbackUntil] = useState(0);
+  const [routeRequest, setRouteRequest] = useState(() => parseRoute(window.location.pathname));
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -115,10 +147,14 @@ function App() {
 
   useEffect(() => {
     if (!regions.length) return;
+    if (routeRequest.regionCode && regions.some((region) => region.cityCode === routeRequest.regionCode)) {
+      if (selectedCode !== routeRequest.regionCode) setSelectedCode(routeRequest.regionCode);
+      return;
+    }
     if (regions.some((region) => region.cityCode === selectedCode)) return;
     const firstReportingRegion = regions.find(hasRaceData);
     setSelectedCode((firstReportingRegion ?? regions[0])?.cityCode ?? null);
-  }, [regions, selectedCode]);
+  }, [regions, routeRequest.regionCode, selectedCode]);
 
   const selectedRegion = useMemo(
     () => regions.find((region) => region.cityCode === selectedCode) ?? regions[0] ?? null,
@@ -138,11 +174,15 @@ function App() {
 
   useEffect(() => {
     if (!availableElections.length) return;
+    if (routeRequest.electionCode && availableElections.some(({ election }) => election.code === routeRequest.electionCode)) {
+      if (selectedElectionCode !== routeRequest.electionCode) setSelectedElectionCode(routeRequest.electionCode);
+      return;
+    }
     if (availableElections.some(({ election }) => election.code === selectedElectionCode)) return;
     const preferred = availableElections.find(({ election }) => election.code === "3") ?? availableElections[0];
     setSelectedElectionCode(preferred.election.code);
     setSelectedRaceKey(ALL_RACES);
-  }, [availableElections, selectedElectionCode]);
+  }, [availableElections, routeRequest.electionCode, selectedElectionCode]);
 
   const selectedElection = useMemo(
     () =>
@@ -167,24 +207,58 @@ function App() {
   }, [normalizedFilter, races]);
 
   useEffect(() => {
+    if (routeRequest.raceSlug) {
+      const routeRace = matchingRaces.find((race) => raceSlug(race) === routeRequest.raceSlug);
+      if (routeRace && selectedRaceKey !== routeRace.raceKey) {
+        setSelectedRaceKey(routeRace.raceKey);
+        return;
+      }
+    }
     if (selectedRaceKey === ALL_RACES) return;
     if (matchingRaces.some((race) => race.raceKey === selectedRaceKey)) return;
     setSelectedRaceKey(ALL_RACES);
-  }, [matchingRaces, selectedRaceKey]);
+  }, [matchingRaces, routeRequest.raceSlug, selectedRaceKey]);
 
   const visibleRaces = useMemo(() => {
     if (selectedRaceKey === ALL_RACES) return matchingRaces;
     return matchingRaces.filter((race) => race.raceKey === selectedRaceKey);
   }, [matchingRaces, selectedRaceKey]);
 
+  const chooseRace = useCallback(
+    (raceKey) => {
+      setSelectedRaceKey(raceKey);
+      const selectedRace = matchingRaces.find((race) => race.raceKey === raceKey);
+      setRouteRequest((current) => ({
+        ...current,
+        raceSlug: selectedRace ? raceSlug(selectedRace) : null,
+      }));
+    },
+    [matchingRaces],
+  );
+
+  useEffect(() => {
+    const onPopState = () => setRouteRequest(parseRoute(window.location.pathname));
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRegion || !selectedElection) return;
+    if (!hasRouteRequest(routeRequest)) return;
+    const selectedRace = selectedRaceKey === ALL_RACES ? null : races.find((race) => race.raceKey === selectedRaceKey);
+    replaceRouteForSelection(selectedRegion, selectedElection, selectedRace);
+  }, [races, routeRequest, selectedElection, selectedRaceKey, selectedRegion]);
+
   const chooseRegion = useCallback((cityCode) => {
     setSelectedCode(cityCode);
     setSelectedRaceKey(ALL_RACES);
+    setRouteRequest((current) => ({ ...current, regionCode: cityCode, raceSlug: null }));
   }, []);
 
   const chooseElection = useCallback((electionCode) => {
     setSelectedElectionCode(electionCode);
     setSelectedRaceKey(ALL_RACES);
+    setRouteRequest((current) => ({ ...current, electionCode, raceSlug: null }));
   }, []);
 
   const submitSearch = useCallback(
@@ -227,7 +301,7 @@ function App() {
         selectedRaceKey=${selectedRaceKey}
         chooseRegion=${chooseRegion}
         chooseElection=${chooseElection}
-        setSelectedRaceKey=${setSelectedRaceKey}
+        chooseRace=${chooseRace}
         loadData=${loadData}
       />
 
@@ -310,7 +384,7 @@ function ResultsSection({
   selectedRaceKey,
   chooseRegion,
   chooseElection,
-  setSelectedRaceKey,
+  chooseRace,
   loadData,
 }) {
   const label = statusLabel(data);
@@ -340,7 +414,7 @@ function ResultsSection({
           selectedElection=${selectedElection}
           races=${matchingRaces}
           selectedRaceKey=${selectedRaceKey}
-          setSelectedRaceKey=${setSelectedRaceKey}
+          chooseRace=${chooseRace}
         />
       </div>
       <div className="results-layout">
@@ -410,14 +484,14 @@ function ElectionTabs({ availableElections, selectedElectionCode, chooseElection
   `;
 }
 
-function DetailSelector({ selectedElection, races, selectedRaceKey, setSelectedRaceKey }) {
+function DetailSelector({ selectedElection, races, selectedRaceKey, chooseRace }) {
   return html`
     <label className="detail-control">
       <span>세부 지역</span>
       <select
         value=${selectedRaceKey}
         disabled=${!races.length}
-        onChange=${(event) => setSelectedRaceKey(event.currentTarget.value)}
+        onChange=${(event) => chooseRace(event.currentTarget.value)}
       >
         <option value=${ALL_RACES}>
           ${selectedElection?.shortName ?? "선거"} 전체 ${races.length ? `(${formatNumber(races.length)})` : ""}
@@ -775,6 +849,82 @@ function dataElections(data) {
 
 function sortByKoreanName(items, getName) {
   return [...items].sort((a, b) => koreanSorter.compare(String(getName(a) ?? ""), String(getName(b) ?? "")));
+}
+
+function invertRecord(record) {
+  return Object.fromEntries(Object.entries(record).map(([key, value]) => [value, key]));
+}
+
+function parseRoute(pathname) {
+  const segments = String(pathname ?? "")
+    .replace(/^\/+|\/+$/g, "")
+    .split("/")
+    .filter(Boolean);
+  const route = {
+    regionCode: null,
+    electionCode: null,
+    raceSlug: null,
+  };
+
+  for (let index = 0; index < segments.length; index += 1) {
+    const segment = segments[index];
+    const value = segments[index + 1];
+    if (!value) continue;
+
+    if (segment === "region") {
+      route.regionCode = REGION_CODES_BY_SLUG[value] ?? null;
+      index += 1;
+    } else if (segment === "election") {
+      route.electionCode = ELECTION_CODES_BY_SLUG[value] ?? null;
+      index += 1;
+    } else if (segment === "race") {
+      route.raceSlug = value;
+      index += 1;
+    }
+  }
+
+  return route;
+}
+
+function hasRouteRequest(route) {
+  return Boolean(route?.regionCode || route?.electionCode || route?.raceSlug);
+}
+
+function replaceRouteForSelection(region, election, race) {
+  const nextPath = routePath(region, election, race);
+  if (!nextPath || nextPath === window.location.pathname) return;
+  window.history.replaceState(null, "", `${nextPath}${window.location.search}${window.location.hash}`);
+}
+
+function routePath(region, election, race) {
+  const regionSlug = REGION_SLUGS[region?.cityCode];
+  const electionSlug = ELECTION_SLUGS[election?.code];
+  if (!regionSlug || !electionSlug) return "/";
+
+  const parts = ["", "region", regionSlug, "election", electionSlug];
+  if (race) parts.push("race", raceSlug(race));
+  return parts.join("/");
+}
+
+function raceSlug(race) {
+  return [
+    "race",
+    race.electionCode ?? "e",
+    race.cityCode ?? "city",
+    race.areaCode ?? "area",
+    hashSlug(race.raceKey ?? race.unitName ?? race.areaName ?? race.cityName),
+  ]
+    .map((part) => String(part).toLowerCase().replace(/[^a-z0-9-]/g, ""))
+    .filter(Boolean)
+    .join("-");
+}
+
+function hashSlug(value) {
+  let hash = 5381;
+  for (const char of String(value ?? "")) {
+    hash = (hash * 33) ^ char.codePointAt(0);
+  }
+  return `h${(hash >>> 0).toString(36)}`;
 }
 
 function raceDisplayName(race) {
