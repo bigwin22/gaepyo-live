@@ -33,11 +33,12 @@ jobs:
 
           for i in 1 2 3 4 5; do
             node scripts/fetch-nec-results.mjs --out data/latest.json
+            node scripts/prepare-seo.mjs
 
-            if git diff --quiet -- data/latest.json; then
-              echo "No data change on cycle ${i}"
+            if git diff --quiet -- data/latest.json index.html sitemap.xml; then
+              echo "No data or SEO change on cycle ${i}"
             else
-              git add data/latest.json
+              git add data/latest.json index.html sitemap.xml
               git commit -m "개표 데이터 갱신"
               git push
             fi

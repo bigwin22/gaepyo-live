@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
+Allow: /app.js
+Allow: /styles.css
+Allow: /site.webmanifest
+Allow: /data/latest.json
+Allow: /api/latest
 
 Sitemap: https://gaepyo-live.vercel.app/sitemap.xml
