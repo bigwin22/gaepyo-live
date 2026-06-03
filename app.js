@@ -295,7 +295,7 @@ function ResultsSection({
         <h2 id="results-title">개표 상황</h2>
         <div className="status-row">
           <span className=${`status-pill ${label.className}`}>${label.text} · 자동 갱신 중</span>
-          <span className="time-chip">데이터 생성 ${formatGeneratedAt(data?.generatedAt)}</span>
+          <span className="time-chip">공식 수집 ${formatGeneratedAt(data?.generatedAt)}</span>
           <span className="time-chip checked">마지막 확인 ${formatCheckedAt(lastCheckedAt)}</span>
           <button className="small-button" type="button" disabled=${loading} onClick=${loadData}>
             ${loading ? "갱신 중" : showRefreshDone ? "확인 완료" : "지금 갱신"}
@@ -611,7 +611,13 @@ function isStale(isoValue) {
 function formatGeneratedAt(value) {
   if (!value) return "업데이트 대기";
   const time = new Date(value);
-  return Number.isNaN(time.getTime()) ? "시각 확인 불가" : `${time.toLocaleString("ko-KR")} 기준`;
+  if (Number.isNaN(time.getTime())) return "시각 확인 불가";
+  const today = new Date();
+  const sameDay =
+    time.getFullYear() === today.getFullYear() &&
+    time.getMonth() === today.getMonth() &&
+    time.getDate() === today.getDate();
+  return sameDay ? `${time.toLocaleTimeString("ko-KR")} 기준` : `${time.toLocaleString("ko-KR")} 기준`;
 }
 
 function formatCheckedAt(value) {
