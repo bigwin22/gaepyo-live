@@ -4,6 +4,8 @@ export const config = {
   maxDuration: 60,
 };
 
+const RESPONSE_CACHE_SECONDS = 60;
+
 export default async function handler(request, response) {
   if (request.method !== "GET") {
     response.setHeader("Allow", "GET");
@@ -19,7 +21,10 @@ export default async function handler(request, response) {
       withPhotos: false,
     });
 
-    response.setHeader("Cache-Control", "no-store, max-age=0");
+    response.setHeader(
+      "Cache-Control",
+      `public, max-age=0, s-maxage=${RESPONSE_CACHE_SECONDS}, stale-while-revalidate=${RESPONSE_CACHE_SECONDS * 2}`,
+    );
     response.setHeader("Access-Control-Allow-Origin", "*");
     response.status(200).json({
       ...payload,

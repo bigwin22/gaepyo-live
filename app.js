@@ -51,6 +51,9 @@ const AUTO_REFRESH_SECONDS = 60;
 const ALL_RACES = "__all__";
 const LIVE_ENDPOINT = "./api/latest";
 const STATIC_ENDPOINT = "./data/latest.json";
+const LOCAL_DATA_CACHE_KEY = "gaepyo-live:last-payload";
+const DATA_CACHE_BUCKET_MS = 60 * 1000;
+const LIVE_FETCH_TIMEOUT_MS = 8000;
 
 function App() {
   const [data, setData] = useState(null);
@@ -65,7 +68,11 @@ function App() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      setData(await fetchLatestData());
+      setData(
+        await fetchLatestData({
+          onCachedPayload: (payload) => setData(payload),
+        }),
+      );
     } catch (error) {
       setData({
         status: "error",
@@ -566,16 +573,30 @@ function dataRegions(data) {
   }));
 }
 
-async function fetchLatestData() {
-  const cacheBust = `ts=${Date.now()}`;
+async function fetchLatestData({ onCachedPayload } = {}) {
+  const cacheBucket = `v=${Math.floor(Date.now() / DATA_CACHE_BUCKET_MS)}`;
+  const cachedPayload = readCachedPayload();
+  if (cachedPayload) onCachedPayload?.(cachedPayload);
+
+  let staticPayload = cachedPayload;
+  try {
+    staticPayload = await fetchStaticData(cacheBucket, "cached static data");
+    writeCachedPayload(staticPayload);
+    onCachedPayload?.(staticPayload);
+  } catch {
+    if (!staticPayload) throw new Error("cached data unavailable");
+  }
+
   if (isGitHubPagesHost()) {
-    return fetchStaticData(cacheBust, "GitHub Pages static hosting");
+    return staticPayload;
   }
 
   try {
-    const liveResponse = await fetch(`${LIVE_ENDPOINT}?${cacheBust}`, { cache: "no-store" });
+    const liveResponse = await fetchWithTimeout(LIVE_ENDPOINT, LIVE_FETCH_TIMEOUT_MS);
     if (liveResponse.ok) {
-      return liveResponse.json();
+      const payload = await liveResponse.json();
+      writeCachedPayload(payload);
+      return payload;
     }
 
     const contentType = liveResponse.headers.get("content-type") ?? "";
@@ -583,14 +604,28 @@ async function fetchLatestData() {
       throw new Error(`/api/latest HTTP ${liveResponse.status}`);
     }
   } catch (error) {
-    return fetchStaticData(cacheBust, error?.message ?? "live API unavailable");
+    return {
+      ...staticPayload,
+      delivery: {
+        ...(staticPayload.delivery ?? {}),
+        mode: staticPayload.delivery?.mode ?? "static-fallback",
+        reason: error?.message ?? "live API unavailable",
+      },
+    };
   }
 
-  return fetchStaticData(cacheBust, "live API unavailable on static hosting");
+  return {
+    ...staticPayload,
+    delivery: {
+      ...(staticPayload.delivery ?? {}),
+      mode: staticPayload.delivery?.mode ?? "static-fallback",
+      reason: "live API unavailable on static hosting",
+    },
+  };
 }
 
 async function fetchStaticData(cacheBust, reason) {
-  const staticResponse = await fetch(`${STATIC_ENDPOINT}?${cacheBust}`, { cache: "no-store" });
+  const staticResponse = await fetch(`${STATIC_ENDPOINT}?${cacheBust}`, { cache: "force-cache" });
   if (!staticResponse.ok) throw new Error(`data/latest.json HTTP ${staticResponse.status}`);
   const payload = await staticResponse.json();
   return {
@@ -600,6 +635,46 @@ async function fetchStaticData(cacheBust, reason) {
       reason,
     },
   };
+}
+
+async function fetchWithTimeout(url, timeoutMs) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      cache: "default",
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function readCachedPayload() {
+  try {
+    const raw = window.localStorage.getItem(LOCAL_DATA_CACHE_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    if (!payload || typeof payload !== "object") return null;
+    return {
+      ...payload,
+      delivery: {
+        ...(payload.delivery ?? {}),
+        mode: payload.delivery?.mode ?? "browser-cache",
+        reason: payload.delivery?.reason ?? "browser cached data",
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedPayload(payload) {
+  try {
+    window.localStorage.setItem(LOCAL_DATA_CACHE_KEY, JSON.stringify(payload));
+  } catch {
+    // Ignore storage failures; network/static cache still keeps the page usable.
+  }
 }
 
 function isGitHubPagesHost() {
