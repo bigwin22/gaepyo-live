@@ -249,17 +249,27 @@ function App() {
     replaceRouteForSelection(selectedRegion, selectedElection, selectedRace);
   }, [races, routeRequest, selectedElection, selectedRaceKey, selectedRegion]);
 
-  const chooseRegion = useCallback((cityCode) => {
-    setSelectedCode(cityCode);
-    setSelectedRaceKey(ALL_RACES);
-    setRouteRequest((current) => ({ ...current, regionCode: cityCode, raceSlug: null }));
-  }, []);
+  const chooseRegion = useCallback(
+    (cityCode) => {
+      setSelectedCode(cityCode);
+      setSelectedRaceKey(ALL_RACES);
+      setRouteRequest((current) => ({ ...current, regionCode: cityCode, raceSlug: null }));
+      const region = regions.find((item) => item.cityCode === cityCode);
+      if (region && selectedElection) replaceRouteForSelection(region, selectedElection, null);
+    },
+    [regions, selectedElection],
+  );
 
-  const chooseElection = useCallback((electionCode) => {
-    setSelectedElectionCode(electionCode);
-    setSelectedRaceKey(ALL_RACES);
-    setRouteRequest((current) => ({ ...current, electionCode, raceSlug: null }));
-  }, []);
+  const chooseElection = useCallback(
+    (electionCode) => {
+      setSelectedElectionCode(electionCode);
+      setSelectedRaceKey(ALL_RACES);
+      setRouteRequest((current) => ({ ...current, electionCode, raceSlug: null }));
+      const election = availableElections.find(({ election: item }) => item.code === electionCode)?.election;
+      if (selectedRegion && election) replaceRouteForSelection(selectedRegion, election, null);
+    },
+    [availableElections, selectedRegion],
+  );
 
   const submitSearch = useCallback(
     (event) => {
@@ -280,7 +290,7 @@ function App() {
           <h2 id="live-title">언론사 실시간 방송</h2>
           <span>실시간 중계</span>
         </div>
-        <${BroadcastGrid} />
+        <${BroadcastTabs} />
       </section>
 
       <${ResultsSection}
@@ -307,6 +317,7 @@ function App() {
 
       <${OfficialLinks} />
     </main>
+    <${SiteFooter} />
     <${Analytics} />
     <${SpeedInsights} />
   `;
@@ -337,17 +348,57 @@ function Header({ filter, setFilter, submitSearch }) {
   `;
 }
 
-const BroadcastGrid = memo(function BroadcastGrid() {
+const BroadcastTabs = memo(function BroadcastTabs() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeVideoId, setActiveVideoId] = useState(broadcasts[0]?.videoId ?? null);
+  const activeBroadcast = broadcasts.find((broadcast) => broadcast.videoId === activeVideoId) ?? broadcasts[0];
+
+  if (!activeBroadcast) return null;
+
+  const playerParams = "autoplay=1&mute=1&playsinline=1&rel=0";
+  const embedUrl = `https://www.youtube.com/embed/${activeBroadcast.videoId}?${playerParams}`;
+
   return html`
-    <div className="broadcast-grid">
-      ${broadcasts.map((broadcast) => {
-        const playerParams = "autoplay=1&mute=1&playsinline=1&rel=0";
-        const embedUrl = `https://www.youtube.com/embed/${broadcast.videoId}?${playerParams}`;
-        return html`
-          <article className="broadcast-card" key=${broadcast.videoId}>
+    <div className=${`broadcast-tabs${isOpen ? " open" : ""}`}>
+      <button
+        className="broadcast-disclosure"
+        type="button"
+        aria-expanded=${isOpen}
+        aria-controls="broadcast-panel"
+        onClick=${() => setIsOpen((current) => !current)}
+      >
+        <span>
+          <strong>언론사 방송 보기</strong>
+          <small>방송 목록은 시청 편의를 위해 제공되며, 특정 언론사나 정치적 입장을 지지하지 않습니다.</small>
+        </span>
+        <span className="broadcast-toggle-indicator" aria-hidden="true" />
+      </button>
+
+      ${isOpen &&
+      html`
+        <div className="broadcast-panel" id="broadcast-panel">
+          <div className="broadcast-tablist" role="tablist" aria-label="언론사 방송 선택">
+            ${broadcasts.map(
+              (broadcast) => html`
+                <button
+                  className=${`broadcast-tab${broadcast.videoId === activeBroadcast.videoId ? " selected" : ""}`}
+                  type="button"
+                  role="tab"
+                  aria-selected=${broadcast.videoId === activeBroadcast.videoId}
+                  aria-controls="broadcast-player"
+                  onClick=${() => setActiveVideoId(broadcast.videoId)}
+                  key=${broadcast.videoId}
+                >
+                  ${broadcast.name}
+                </button>
+              `,
+            )}
+          </div>
+
+          <article className="broadcast-card" id="broadcast-player" role="tabpanel">
             <div className="broadcast-frame">
               <iframe
-                title="${broadcast.name} live"
+                title="${activeBroadcast.name} live"
                 src=${embedUrl}
                 loading="eager"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -355,13 +406,13 @@ const BroadcastGrid = memo(function BroadcastGrid() {
               />
             </div>
             <div className="broadcast-meta">
-              <h3>${broadcast.name}</h3>
-              <p className="muted">${broadcast.description}</p>
-              <a className="text-link" href=${broadcast.url} target="_blank" rel="noreferrer">유튜브에서 보기</a>
+              <h3>${activeBroadcast.name}</h3>
+              <p className="muted">${activeBroadcast.description}</p>
+              <a className="text-link" href=${activeBroadcast.url} target="_blank" rel="noreferrer">유튜브에서 보기</a>
             </div>
           </article>
-        `;
-      })}
+        </div>
+      `}
     </div>
   `;
 });
@@ -654,6 +705,16 @@ function OfficialLinks() {
         <a className="button" href="https://www.nec.go.kr/" target="_blank" rel="noreferrer">선관위</a>
       </div>
     </section>
+  `;
+}
+
+function SiteFooter() {
+  return html`
+    <footer className="site-footer">
+      <p>© 2026 gubiko. All rights reserved.</p>
+      <p>정보 소스: 중앙선거관리위원회 실시간 개표 자료</p>
+      <p>방송 목록은 시청 편의를 위해 제공되며, 특정 언론사나 정치적 입장을 지지하지 않습니다.</p>
+    </footer>
   `;
 }
 
