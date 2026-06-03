@@ -218,7 +218,7 @@ async function collectElection(electionType, errors, warnings, photoCache) {
     raceCount: regions.reduce((sum, region) => sum + region.races.length, 0),
     regions: regions.map((region) => ({
       ...region,
-      races: sortByKoreanName(region.races, raceDisplayName),
+      races: sortRacesForDisplay(region.races),
     })),
   };
 }
@@ -788,8 +788,22 @@ function sortByKoreanName(items, getName) {
   return [...items].sort((a, b) => koreanSorter.compare(String(getName(a) ?? ""), String(getName(b) ?? "")));
 }
 
+function sortRacesForDisplay(races) {
+  return [...races].sort((a, b) => {
+    const aAggregate = isAggregateRace(a);
+    const bAggregate = isAggregateRace(b);
+    if (aAggregate !== bAggregate) return aAggregate ? -1 : 1;
+    return koreanSorter.compare(raceDisplayName(a), raceDisplayName(b));
+  });
+}
+
 function raceDisplayName(race) {
   return race.unitName ?? race.areaName ?? race.cityName ?? "";
+}
+
+function isAggregateRace(race) {
+  const unitName = String(race?.unitName ?? "").replace(/\s+/g, "");
+  return unitName === "합계" || unitName === "소계";
 }
 
 function toPhotoUrl(value) {

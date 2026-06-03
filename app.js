@@ -935,7 +935,7 @@ function dataElections(data) {
       regions: sortByKoreanName(
         (election.regions ?? []).map((region) => ({
           ...region,
-          races: sortByKoreanName(region.races ?? [], raceDisplayName),
+          races: sortRacesForDisplay(region.races ?? []),
         })),
         (region) => region.cityName ?? region.name,
       ),
@@ -1000,6 +1000,15 @@ function buildSeatShare(election) {
 
 function sortByKoreanName(items, getName) {
   return [...items].sort((a, b) => koreanSorter.compare(String(getName(a) ?? ""), String(getName(b) ?? "")));
+}
+
+function sortRacesForDisplay(races) {
+  return [...races].sort((a, b) => {
+    const aAggregate = isAggregateRace(a);
+    const bAggregate = isAggregateRace(b);
+    if (aAggregate !== bAggregate) return aAggregate ? -1 : 1;
+    return koreanSorter.compare(raceDisplayName(a), raceDisplayName(b));
+  });
 }
 
 function invertRecord(record) {
