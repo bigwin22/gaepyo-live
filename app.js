@@ -47,6 +47,8 @@ const fallbackRegions = [
 
 const AUTO_REFRESH_SECONDS = 60;
 const ALL_RACES = "__all__";
+const LIVE_ENDPOINT = "./api/latest";
+const STATIC_ENDPOINT = "./data/latest.json";
 
 function App() {
   const [data, setData] = useState(null);
@@ -61,9 +63,7 @@ function App() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`./data/latest.json?ts=${Date.now()}`, { cache: "no-store" });
-      if (!response.ok) throw new Error(`data/latest.json HTTP ${response.status}`);
-      setData(await response.json());
+      setData(await fetchLatestData());
     } catch (error) {
       setData({
         status: "error",
@@ -562,6 +562,46 @@ function dataRegions(data) {
   }));
 }
 
+async function fetchLatestData() {
+  const cacheBust = `ts=${Date.now()}`;
+  if (isGitHubPagesHost()) {
+    return fetchStaticData(cacheBust, "GitHub Pages static hosting");
+  }
+
+  try {
+    const liveResponse = await fetch(`${LIVE_ENDPOINT}?${cacheBust}`, { cache: "no-store" });
+    if (liveResponse.ok) {
+      return liveResponse.json();
+    }
+
+    const contentType = liveResponse.headers.get("content-type") ?? "";
+    if (!contentType.includes("text/html")) {
+      throw new Error(`/api/latest HTTP ${liveResponse.status}`);
+    }
+  } catch (error) {
+    return fetchStaticData(cacheBust, error?.message ?? "live API unavailable");
+  }
+
+  return fetchStaticData(cacheBust, "live API unavailable on static hosting");
+}
+
+async function fetchStaticData(cacheBust, reason) {
+  const staticResponse = await fetch(`${STATIC_ENDPOINT}?${cacheBust}`, { cache: "no-store" });
+  if (!staticResponse.ok) throw new Error(`data/latest.json HTTP ${staticResponse.status}`);
+  const payload = await staticResponse.json();
+  return {
+    ...payload,
+    delivery: {
+      mode: "static-fallback",
+      reason,
+    },
+  };
+}
+
+function isGitHubPagesHost() {
+  return window.location.hostname.endsWith(".github.io");
+}
+
 function dataElections(data) {
   if (data?.elections?.length) return data.elections;
 
@@ -592,6 +632,8 @@ function hasRaceData(region) {
 function statusLabel(data) {
   if (!data) return { className: "warning", text: "데이터 로딩 중" };
   if (data.status === "ok") {
+    if (data.delivery?.mode === "serverless-live") return { className: "ok", text: "공식 실시간 수집" };
+    if (data.delivery?.mode === "static-fallback") return { className: "warning", text: "저장 데이터 표시" };
     return isStale(data.generatedAt)
       ? { className: "warning", text: "공식 데이터 오래됨" }
       : { className: "ok", text: "공식 데이터 반영" };
