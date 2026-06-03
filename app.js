@@ -54,7 +54,7 @@ const LIVE_REFRESH_ENDPOINT = "./api/latest?live=1";
 const STATIC_ENDPOINT = "./data/latest.json";
 const LOCAL_DATA_CACHE_KEY = "gaepyo-live:last-payload";
 const DATA_CACHE_BUCKET_MS = 60 * 1000;
-const LIVE_FETCH_TIMEOUT_MS = 30000;
+const LIVE_FETCH_TIMEOUT_MS = 55000;
 
 function App() {
   const [data, setData] = useState(null);
