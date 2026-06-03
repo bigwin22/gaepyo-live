@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run prepare-seo",
+    "codex:seo-guard": "python3 .codex/hooks/seo_deploy_guard.py",
     "fetch:nec": "node scripts/fetch-nec-results.mjs --out data/latest.json",
     "prepare-seo": "node scripts/prepare-seo.mjs"
   },
