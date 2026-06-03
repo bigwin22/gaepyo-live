@@ -84,8 +84,8 @@ function updateIndex(html, payload, page) {
   next = replaceOrInsertMetaName(next, "twitter:description", page.description);
   next = replaceOrInsertMetaName(next, "twitter:image", OG_IMAGE_URL);
   next = replaceOrInsertLink(next, "canonical", SITE_URL);
-  next = replaceOrInsertLink(next, "icon", "./assets/app-icon.svg", 'type="image/svg+xml"');
-  next = replaceOrInsertLink(next, "apple-touch-icon", "./assets/app-icon-192.png");
+  next = replaceOrInsertLink(next, "icon", "/assets/app-icon.svg", 'type="image/svg+xml"');
+  next = replaceOrInsertLink(next, "apple-touch-icon", "/assets/app-icon-192.png");
   next = replaceJsonLd(next, buildStructuredData(payload, page));
   next = replaceFallback(next, buildFallbackHtml(page));
   return normalizeHeadOrder(next);
