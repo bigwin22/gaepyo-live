@@ -2,6 +2,16 @@
 
 이 문서는 다른 Codex/자동화 에이전트가 `gaepyo-live` 작업을 이어받기 위한 운영 가이드다. 정확도와 배포 속도가 중요하므로, 변경 전후로 데이터 흐름과 공개 URL 검증을 반드시 확인한다.
 
+## Codex SEO/Deploy Hook
+
+- 프로젝트 로컬 Codex 훅은 `.codex/hooks.json`과 `.codex/hooks/seo_deploy_guard.py`에 있다.
+- 훅은 `Stop` 시점에 SEO 영향 파일 변경을 감지하면 `npm run prepare-seo`, 문법 검사, 대표 sitemap 경로 검사를 실행한다.
+- SEO 영향 파일은 `app.js`, `styles.css`, `index.html`, `data/**`, `scripts/**`, `assets/**`, `robots.txt`, `site.webmanifest`, `sitemap.xml`, `region/**`, `vercel.json`, 문서/패키지 파일이다.
+- 훅이 계속 작업하라고 반환하면 종료하지 말고, 생성된 SEO/sitemap/하위 HTML 변경을 커밋에 포함한다.
+- SEO 영향 변경을 커밋한 뒤에는 push, PR 생성/병합, `npx --yes vercel deploy --prod --yes` 배포까지 진행한다.
+- 배포 후 공개 URL에서 `https://vote.gubiko.com/sitemap.xml`과 대표 하위 경로 `https://vote.gubiko.com/region/seoul/election/education`의 `canonical`/`og:url`을 확인한다.
+- 수동으로 같은 검사를 실행할 때는 `npm run codex:seo-guard`를 사용한다.
+
 ## 현재 운영 상태
 
 - 운영 URL: `https://vote.gubiko.com/`
@@ -17,10 +27,12 @@
 - `styles.css`: 전체 반응형 스타일.
 - `api/latest.js`: Vercel 서버리스 API. 기본 요청은 저장 캐시를 즉시 반환하고, `?live=1` 요청만 선관위 실시간 수집을 수행한다.
 - `scripts/fetch-nec-results.mjs`: 선관위 `VCCP09` HTML 표 수집/파싱 스크립트.
-- `scripts/prepare-seo.mjs`: 최신 데이터 기반 SEO 문구/사이트맵 갱신.
+- `scripts/prepare-seo.mjs`: 최신 데이터 기반 SEO 문구/사이트맵/하위 경로 정적 HTML 갱신.
 - `data/latest.json`: 저장 캐시 데이터. 초기 표시와 후보 사진 캐시에 사용된다.
 - `.github/workflows/update-results.yml`: GitHub Actions 데이터 갱신 루프. 5분 schedule 안에서 60초 간격 5회 수집한다.
+- `.codex/hooks.json`, `.codex/hooks/seo_deploy_guard.py`: Codex 종료 시 SEO/sitemap 재생성과 배포 필요 여부를 점검하는 프로젝트 로컬 훅.
 - `robots.txt`, `sitemap.xml`, `site.webmanifest`: 운영 도메인 `https://vote.gubiko.com/` 기준 SEO 파일.
+- `region/**/index.html`: 지역/선거종류 하위 경로의 self-canonical 정적 SEO HTML.
 - `assets/`: 아이콘/OG 이미지 등 정적 SEO 자산.
 
 ## 데이터 흐름
@@ -30,7 +42,7 @@
 3. `api/latest.js?live=1`은 선관위 `POST https://info.nec.go.kr/electioninfo/electionInfo_report.xhtml`에서 `VCCP09` 표를 수집한다.
 4. 최신 수집 결과가 오면 화면을 교체하고 브라우저 캐시에 저장한다.
 5. `./api/latest` 기본 요청은 접속 UX를 위해 `data/latest.json`을 즉시 반환한다.
-6. GitHub Actions는 주기적으로 `data/latest.json`, `index.html`, `sitemap.xml`을 갱신하고 자동 커밋한다.
+6. GitHub Actions는 주기적으로 `data/latest.json`, `index.html`, `sitemap.xml`, `region/**/index.html`을 갱신하고 자동 커밋한다.
 
 ## 선거 데이터 범위
 
@@ -107,6 +119,12 @@ SEO 재생성:
 npm run prepare-seo
 ```
 
+Codex SEO/배포 훅 수동 실행:
+
+```sh
+npm run codex:seo-guard
+```
+
 ## Vercel 배포
 
 프로덕션 배포:
@@ -122,7 +140,8 @@ npx --yes vercel deploy --prod --yes
 ```sh
 curl -fsSL "https://vote.gubiko.com/?verify=$(date +%s)" | rg "canonical|og:url|vote.gubiko.com"
 curl -fsSL "https://vote.gubiko.com/robots.txt?verify=$(date +%s)"
-curl -fsSL "https://vote.gubiko.com/sitemap.xml?verify=$(date +%s)"
+curl -fsSL "https://vote.gubiko.com/sitemap.xml?verify=$(date +%s)" | rg "region/seoul/election/education"
+curl -fsSL "https://vote.gubiko.com/region/seoul/election/education?verify=$(date +%s)" | rg "<title>|canonical|og:url"
 curl -fsSL "https://vote.gubiko.com/app.js?verify=$(date +%s)" | rg "LIVE_REFRESH_ENDPOINT|Analytics|SpeedInsights"
 ```
 
@@ -154,14 +173,18 @@ node -e 'const j=require("/tmp/gaepyo-live.json"); console.log({mode:j.delivery?
 - `node_modules`, `.vercel`, `.DS_Store`는 커밋하지 않는다.
 - 커밋 메시지는 한국어로 작성한다.
 - PR을 만들고 병합한 뒤 Vercel 프로덕션 배포까지 진행하는 것이 기본 완료 기준이다.
+- Codex 훅이 SEO/sitemap/배포 후속 작업 필요 메시지를 반환하면 작업을 종료하지 말고, 훅 메시지의 지시를 완료한 뒤 다시 검증한다.
 
 일반 흐름:
 
 ```sh
 git switch -c codex/<task-name>
 # edit
+npm run prepare-seo
 node --check app.js
 node --check api/latest.js
+node --check scripts/fetch-nec-results.mjs
+node --check scripts/prepare-seo.mjs
 git add <changed files>
 git commit -m "<한국어 메시지>"
 git push -u origin codex/<task-name>
@@ -178,3 +201,4 @@ npx --yes vercel deploy --prod --yes
 - `warnings`와 `errors`를 혼동하지 않는다.
 - 자동 갱신이 유튜브 iframe을 다시 로드하지 않는지 확인한다.
 - SEO URL은 항상 `https://vote.gubiko.com/` 기준으로 유지한다.
+- 하위 경로 SEO는 `region/**/index.html`과 `sitemap.xml`이 함께 갱신되어야 한다.
