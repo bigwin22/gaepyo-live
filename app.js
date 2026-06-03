@@ -42,6 +42,7 @@ const fallbackRegions = [
 const state = {
   data: null,
   selectedCode: null,
+  selectedElectionCode: "3",
   filter: "",
   autoRefreshSeconds: 60,
 };
@@ -55,6 +56,7 @@ const updatedAt = document.querySelector("#updated-at");
 const sourceStatus = document.querySelector("#source-status");
 const nationalGrid = document.querySelector("#national-grid");
 const refreshButton = document.querySelector("#refresh-data");
+const electionTabs = document.querySelector("#election-tabs");
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString("ko-KR");
@@ -62,6 +64,26 @@ function formatNumber(value) {
 
 function formatRate(value) {
   return `${Number(value || 0).toFixed(2)}%`;
+}
+
+function partyColor(party = "") {
+  if (party.includes("더불어민주당")) return "#1f4e9d";
+  if (party.includes("국민의힘")) return "#c43c3c";
+  if (party.includes("정의당")) return "#d6a100";
+  if (party.includes("개혁신당")) return "#d96b2b";
+  if (party.includes("진보당")) return "#b91c1c";
+  if (party.includes("여성의당")) return "#7c4d9e";
+  if (party.includes("기본소득당")) return "#008b8b";
+  if (party.includes("무소속")) return "#6b7280";
+  return "#52525b";
+}
+
+function candidatePhotoUrl(candidate) {
+  return candidate.photoUrl ?? candidate.photoThumbnailUrl ?? candidate.imageUrl ?? candidate.profileImage ?? "";
+}
+
+function candidateInitial(candidate) {
+  return [...String(candidate.name || candidate.party || candidate.rank || "?").trim()][0] || "?";
 }
 
 function isStale(isoValue) {
@@ -90,6 +112,7 @@ async function loadData() {
     if (!response.ok) throw new Error(`data/latest.json HTTP ${response.status}`);
     state.data = await response.json();
     syncSelectedRegion();
+    syncSelectedElection();
   } catch (error) {
     state.data = {
       status: "error",
@@ -119,6 +142,29 @@ function dataRegions() {
   }));
 }
 
+function dataElections() {
+  if (state.data?.elections?.length) return state.data.elections;
+
+  const regions = state.data?.regions?.length ? state.data.regions : [];
+  if (!regions.length) return [];
+
+  return [
+    {
+      code: "3",
+      name: "시·도지사선거",
+      shortName: "시도지사",
+      regionCount: regions.length,
+      raceCount: regions.length,
+      regions: regions.map((region) => ({
+        cityCode: region.cityCode,
+        cityName: region.cityName ?? region.name,
+        shortName: region.shortName ?? region.cityName ?? region.name,
+        races: [region],
+      })),
+    },
+  ];
+}
+
 function syncSelectedRegion() {
   const regions = dataRegions();
   if (regions.some((region) => region.cityCode === state.selectedCode)) return;
@@ -127,8 +173,25 @@ function syncSelectedRegion() {
   state.selectedCode = (firstReportingRegion ?? regions[0])?.cityCode ?? state.selectedCode;
 }
 
+function syncSelectedElection() {
+  const available = availableElectionsForSelectedRegion();
+  if (available.some(({ election }) => election.code === state.selectedElectionCode)) return;
+
+  const preferred = available.find(({ election }) => election.code === "3") ?? available[0];
+  state.selectedElectionCode = preferred?.election.code ?? "3";
+}
+
 function hasRaceData(region) {
   return Number(region?.totalVotes || 0) > 0 || Number(region?.countingRate || 0) > 0;
+}
+
+function availableElectionsForSelectedRegion() {
+  return dataElections()
+    .map((election) => ({
+      election,
+      region: election.regions?.find((item) => item.cityCode === state.selectedCode),
+    }))
+    .filter(({ region }) => region?.races?.length > 0);
 }
 
 function renderAll() {
@@ -136,6 +199,8 @@ function renderAll() {
   renderSourceStatus();
   renderNational();
   renderRegions(state.filter);
+  syncSelectedElection();
+  renderElectionTabs();
   showRegion(state.selectedCode);
 }
 
@@ -234,49 +299,127 @@ function renderRegions(filter = "") {
     .join("");
 }
 
+function renderElectionTabs() {
+  const available = availableElectionsForSelectedRegion();
+
+  if (!available.length) {
+    electionTabs.innerHTML = "";
+    return;
+  }
+
+  electionTabs.innerHTML = available
+    .map(({ election, region }) => {
+      const selected = election.code === state.selectedElectionCode ? " selected" : "";
+      return `
+        <button class="election-tab${selected}" type="button" data-election="${election.code}">
+          <span>${election.shortName ?? election.name}</span>
+          <strong>${formatNumber(region.races.length)}</strong>
+        </button>
+      `;
+    })
+    .join("");
+}
+
 function showRegion(cityCode) {
   state.selectedCode = cityCode;
-  const region = dataRegions().find((item) => item.cityCode === cityCode) ?? dataRegions()[0];
-  if (!region) {
+  const summaryRegion = dataRegions().find((item) => item.cityCode === cityCode) ?? dataRegions()[0];
+  syncSelectedElection();
+  renderElectionTabs();
+
+  const selectedElection = dataElections().find((election) => election.code === state.selectedElectionCode);
+  const electionRegion = selectedElection?.regions?.find((item) => item.cityCode === state.selectedCode);
+  const races = electionRegion?.races ?? [];
+  const regionName = summaryRegion?.cityName ?? electionRegion?.cityName ?? "선택 지역";
+
+  if (!summaryRegion && !electionRegion) {
     racePanel.innerHTML = `<p class="muted">지역 데이터가 아직 없습니다.</p>`;
     return;
   }
 
-  const hasCandidates = region.candidates?.length > 0;
-  const gapText =
-    region.voteGap == null
-      ? "격차 대기"
-      : `${formatNumber(region.voteGap)}표 · ${formatRate(region.rateGap)}p`;
+  if (!races.length) {
+    racePanel.innerHTML = `
+      <div class="race-heading">
+        <div>
+          <p class="eyebrow">${selectedElection?.name ?? "선거종류"}</p>
+          <h3>${regionName}</h3>
+        </div>
+      </div>
+      <p class="notice">이 지역의 해당 선거종류 개표 데이터가 아직 없습니다.</p>
+    `;
+    renderRegions(state.filter);
+    return;
+  }
+
+  const leadingRace =
+    races.find((race) => race.unitName === "합계") ??
+    races.find((race) => Number(race.totalVotes || 0) > 0 || Number(race.countingRate || 0) > 0) ??
+    races[0];
 
   racePanel.innerHTML = `
-    <div class="race-heading">
+    <div class="race-heading panel-heading">
       <div>
-        <p class="eyebrow">${region.electionName ?? "시·도지사선거"}</p>
-        <h3>${region.cityName}</h3>
+        <p class="eyebrow">${selectedElection.name}</p>
+        <h3>${regionName}</h3>
       </div>
-      <span class="count-rate">${formatRate(region.countingRate)}</span>
+      <span class="count-rate">${formatRate(leadingRace.countingRate)}</span>
     </div>
-    <div class="race-summary">
-      <div><span>투표수</span><strong>${formatNumber(region.totalVotes)}</strong></div>
-      <div><span>유효표</span><strong>${formatNumber(region.validVotes)}</strong></div>
-      <div><span>1-2위 격차</span><strong>${gapText}</strong></div>
+    <div class="race-group">
+      ${races.map((race) => renderRaceCard(race, races.length > 1)).join("")}
     </div>
-    ${
-      hasCandidates
-        ? `<div class="candidate-list">${region.candidates.map(renderCandidate).join("")}</div>`
-        : `<p class="notice">공식 후보별 득표 데이터 갱신 대기 중입니다. 선관위 원문 링크에서 즉시 확인할 수 있습니다.</p>`
-    }
   `;
 
   renderRegions(state.filter);
 }
 
+function renderRaceCard(race, showUnitName = false) {
+  const hasCandidates = race.candidates?.length > 0;
+  const gapText =
+    race.voteGap == null
+      ? "격차 대기"
+      : `${formatNumber(race.voteGap)}표 · ${formatRate(race.rateGap)}p`;
+
+  return `
+    <article class="race-card">
+      ${
+        showUnitName
+          ? `<div class="race-heading race-card-heading">
+      <div>
+        <p class="eyebrow">${race.areaName ?? race.electionShortName ?? race.electionName}</p>
+        <h3>${race.unitName ?? race.cityName}</h3>
+      </div>
+      <span class="count-rate">${formatRate(race.countingRate)}</span>
+    </div>`
+          : ""
+      }
+    <div class="race-summary">
+      <div><span>투표수</span><strong>${formatNumber(race.totalVotes)}</strong></div>
+      <div><span>유효표</span><strong>${formatNumber(race.validVotes)}</strong></div>
+      <div><span>1-2위 격차</span><strong>${gapText}</strong></div>
+    </div>
+    ${
+      hasCandidates
+        ? `<div class="candidate-list">${race.candidates.map(renderCandidate).join("")}</div>`
+        : `<p class="notice">공식 후보별 득표 데이터 갱신 대기 중입니다. 선관위 원문 링크에서 즉시 확인할 수 있습니다.</p>`
+    }
+    </article>
+  `;
+}
+
 function renderCandidate(candidate) {
   const width = Math.max(2, Math.min(100, Number(candidate.rate || 0)));
+  const color = partyColor(candidate.party);
+  const photoUrl = candidatePhotoUrl(candidate);
+  const portrait = photoUrl
+    ? `<img src="${photoUrl}" alt="${candidate.name} 후보 사진" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()" />`
+    : "";
   return `
-    <article class="candidate-card">
+    <article class="candidate-card" style="--party-color: ${color}">
       <div class="candidate-topline">
-        <span class="rank">${candidate.rank}</span>
+        <div class="candidate-portrait">
+          ${portrait}
+          <span class="portrait-fallback">${candidateInitial(candidate)}</span>
+          <span class="rank-badge">${candidate.rank}</span>
+        </div>
         <div class="candidate-name">
           <strong>${candidate.name}</strong>
           <span>${candidate.party}</span>
@@ -305,6 +448,13 @@ regionList.addEventListener("click", (event) => {
   const button = event.target.closest("[data-region]");
   if (!button) return;
   showRegion(button.dataset.region);
+});
+
+electionTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-election]");
+  if (!button) return;
+  state.selectedElectionCode = button.dataset.election;
+  showRegion(state.selectedCode);
 });
 
 refreshButton.addEventListener("click", loadData);
