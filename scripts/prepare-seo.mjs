@@ -250,18 +250,19 @@ function buildRoutePages(payload, summary) {
       const regionSlug = REGION_SLUGS[region?.cityCode];
       const races = Array.isArray(region.races) ? region.races.filter((race) => !isSubtotalRace(race)) : [];
       if (!regionSlug || !races.length) continue;
-      const regionSummary = payload.regions?.find((item) => item.cityCode === region.cityCode) ?? region;
+      const routeSummary = summarizeRouteRaces(races);
       const path = `/region/${regionSlug}/election/${electionSlug}`;
       const title = `${region.cityName} ${election.shortName ?? election.name} 실시간 개표율 | 개표라이브`;
-      const leader = regionSummary?.leader?.name
-        ? `${regionSummary.leader.party ? `${regionSummary.leader.party} ` : ""}${regionSummary.leader.name} ${formatRate(regionSummary.leader.rate)}`
+      const leader = routeSummary.leader?.name
+        ? `${candidateLabel(routeSummary.leader)} ${formatRate(routeSummary.leader.rate)}`
         : "후보 우세율 집계 중";
-      const description = `${summary.modifiedKst} 기준 ${region.cityName} ${election.shortName ?? election.name} 개표 상황입니다. 개표율 ${formatRate(regionSummary?.countingRate)}, ${leader}. 선관위 공식 개표 데이터를 1분마다 확인합니다.`;
+      const description = `${summary.modifiedKst} 기준 ${region.cityName} ${election.shortName ?? election.name} 개표 상황입니다. 개표율 ${formatRate(routeSummary.countingRate)}, ${leader}. 선관위 공식 개표 데이터를 1분마다 확인합니다.`;
       pages.push({
         path,
         url: `${SITE_URL}${path.replace(/^\//, "")}`,
         title,
         description,
+        modifiedIso: summary.modifiedIso,
         fallback: buildRouteFallbackHtml({
           title,
           description,
@@ -281,7 +282,7 @@ function buildRouteFallbackHtml({ title, description, region, election, races, s
     .slice(0, 60)
     .map((race) => {
       const leader = race.leader?.name
-        ? `${race.leader.party ? `${race.leader.party} ` : ""}${race.leader.name} ${formatRate(race.leader.rate)}`
+        ? `${candidateLabel(race.leader)} ${formatRate(race.leader.rate)}`
         : "후보 우세율 집계 중";
       return `
           <li>
@@ -345,6 +346,7 @@ function buildRouteStructuredData(page) {
         isPartOf: { "@id": `${SITE_URL}#website` },
         inLanguage: "ko-KR",
         datePublished: "2026-06-03",
+        dateModified: page.modifiedIso,
       },
       {
         "@type": "BreadcrumbList",
@@ -468,6 +470,55 @@ function isSubtotalRace(race) {
   const key = String(race?.raceKey ?? "");
   const unit = String(race?.unitName ?? race?.areaName ?? "");
   return key.includes("subtotal") || unit.includes("소계") || unit.includes("합계");
+}
+
+function summarizeRouteRaces(races) {
+  const totals = new Map();
+  let totalVotes = 0;
+  let countingRateSum = 0;
+  let countingRateCount = 0;
+
+  for (const race of races) {
+    const raceTotalVotes = Number(race?.totalVotes ?? 0);
+    if (Number.isFinite(raceTotalVotes)) totalVotes += raceTotalVotes;
+    const countingRate = Number(race?.countingRate);
+    if (Number.isFinite(countingRate)) {
+      countingRateSum += countingRate;
+      countingRateCount += 1;
+    }
+
+    for (const candidate of Array.isArray(race?.candidates) ? race.candidates : []) {
+      if (!candidate?.name) continue;
+      const key = `${candidate.party ?? ""}\u0000${candidate.name}`;
+      const current = totals.get(key) ?? {
+        party: candidate.party ?? "",
+        name: candidate.name,
+        votes: 0,
+      };
+      current.votes += Number(candidate.votes ?? 0);
+      totals.set(key, current);
+    }
+  }
+
+  const leaders = [...totals.values()].sort((a, b) => b.votes - a.votes);
+  const leader = leaders[0]
+    ? {
+        ...leaders[0],
+        rate: totalVotes > 0 ? (leaders[0].votes / totalVotes) * 100 : 0,
+      }
+    : null;
+
+  return {
+    countingRate: countingRateCount > 0 ? countingRateSum / countingRateCount : 0,
+    leader,
+  };
+}
+
+function candidateLabel(candidate) {
+  const party = String(candidate?.party ?? "").trim();
+  const name = String(candidate?.name ?? "").trim();
+  if (!party || party === name) return name;
+  return `${party} ${name}`;
 }
 
 function parseDate(value) {
