@@ -295,10 +295,23 @@ function App() {
       event.preventDefault();
       const query = normalizeSearchText(filter);
       if (!query) return;
+      const raceMatch = findFirstRaceSearchMatch(elections, regions, query);
+      if (raceMatch) {
+        setSelectedCode(raceMatch.region.cityCode);
+        setSelectedElectionCode(raceMatch.election.code);
+        setSelectedRaceKey(raceMatch.race.raceKey ?? ALL_RACES);
+        setRouteRequest({
+          regionCode: raceMatch.region.cityCode,
+          electionCode: raceMatch.election.code,
+          raceSlug: raceSlug(raceMatch.race),
+        });
+        replaceRouteForSelection(raceMatch.region, raceMatch.election, raceMatch.race);
+        return;
+      }
       const first = regions.find((region) => matchesRegionSearch(region, query));
       if (first) chooseRegion(first.cityCode);
     },
-    [chooseRegion, filter, regions],
+    [chooseRegion, elections, filter, regions],
   );
 
   return html`
@@ -346,13 +359,13 @@ function Header({ filter, setFilter, submitSearch }) {
   return html`
     <header className="site-header">
       <form className="search" onSubmit=${submitSearch}>
-        <label htmlFor="region-input">지역 검색</label>
+        <label htmlFor="region-input">지역·후보 검색</label>
         <div className="search-row">
           <input
             id="region-input"
             name="region"
             type="search"
-            placeholder="예: 서울, 경기, 안산"
+            placeholder="예: 서울, 안산, 후보자 이름"
             value=${filter}
             onInput=${(event) => setFilter(event.currentTarget.value)}
           />
@@ -1160,7 +1173,12 @@ function raceSearchParts(race) {
     race.electionName,
     race.electionShortName,
     race.raceKey,
+    ...candidateSearchParts(race),
   ];
+}
+
+function candidateSearchParts(race) {
+  return (race?.candidates ?? []).flatMap((candidate) => [candidate.name, candidate.party]);
 }
 
 function normalizeSearchText(value) {
@@ -1177,6 +1195,23 @@ function matchesRegionSearch(region, normalizedQuery) {
 function matchesRaceSearch(race, normalizedQuery) {
   if (!normalizedQuery) return true;
   return normalizeSearchText(raceSearchParts(race).filter(Boolean).join(" ")).includes(normalizedQuery);
+}
+
+function findFirstRaceSearchMatch(elections, regions, normalizedQuery) {
+  if (!normalizedQuery) return null;
+  for (const election of elections ?? []) {
+    for (const electionRegion of election.regions ?? []) {
+      for (const race of electionRegion.races ?? []) {
+        if (isSubtotalRace(race) || !matchesRaceSearch(race, normalizedQuery)) continue;
+        return {
+          election,
+          region: regions.find((region) => region.cityCode === electionRegion.cityCode) ?? electionRegion,
+          race,
+        };
+      }
+    }
+  }
+  return null;
 }
 
 function hasRaceData(region) {
