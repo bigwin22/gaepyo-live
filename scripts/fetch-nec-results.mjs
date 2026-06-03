@@ -81,6 +81,7 @@ async function buildFromNec() {
   const regions = [];
   const educationRegions = [];
   const errors = [];
+  const warnings = [];
 
   for (const electionType of ELECTION_TYPES) {
     for (const city of CITY_CODES) {
@@ -97,10 +98,14 @@ async function buildFromNec() {
           if (electionType.primary) regions.push(race);
           else educationRegions.push(race);
         } else {
-          errors.push(`${city.name} ${electionType.name}: 결과 표 없음`);
+          const message = `${city.name} ${electionType.name}: 결과 표 없음`;
+          if (electionType.primary) errors.push(message);
+          else warnings.push(message);
         }
       } catch (error) {
-        errors.push(`${city.name} ${electionType.name}: ${error.message}`);
+        const message = `${city.name} ${electionType.name}: ${error.message}`;
+        if (electionType.primary) errors.push(message);
+        else warnings.push(message);
       }
     }
   }
@@ -110,6 +115,7 @@ async function buildFromNec() {
     regions,
     educationRegions,
     errors,
+    warnings,
   });
 }
 
@@ -260,7 +266,7 @@ function buildRaceFromRows(candidateRow, resultRow, rateRow, context) {
   };
 }
 
-function buildPayload({ status, regions, educationRegions = [], errors }) {
+function buildPayload({ status, regions, educationRegions = [], errors, warnings = [] }) {
   const national = summarizeNational(regions);
   return {
     schemaVersion: 1,
@@ -284,6 +290,7 @@ function buildPayload({ status, regions, educationRegions = [], errors }) {
     regions,
     educationRegions,
     errors,
+    warnings,
   };
 }
 

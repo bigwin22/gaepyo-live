@@ -5,9 +5,9 @@
 ## 제공 기능
 
 - 중앙선거관리위원회 선거통계시스템 공식 링크와 개표소 현황 링크
-- GitHub Actions가 생성하는 `data/latest.json` 기반 전국 개표 요약
+- GitHub Actions가 생성하는 `data/latest.json` 기반 전국 개표 요약과 브라우저 60초 자동 갱신
 - 선택 지역의 후보별 순위, 득표율, 득표수, 1-2위 격차 표시
-- KBS/MBC/SBS/YTN 등 주요 방송사 채널 스트림/검색 링크
+- SBS/MBC/TV조선 공식 유튜브 개표방송을 페이지 안에서 바로 시청
 - 모바일 390px 폭에서도 검색, 공식 링크, 후보 경합 카드가 읽히는 반응형 UI
 
 ## 공식 확인 사실
@@ -75,6 +75,9 @@ node scripts/fetch-nec-results.mjs --fixture /path/to/vccp09.html --out /tmp/lat
 
 ## 개발 메모
 
-- 외부 라이브 영상은 고정 video ID가 바뀔 수 있으므로 깨진 embed 대신 공식 채널 streams/search 링크를 사용합니다. 즉, 현재 UI의 언론사 카드는 내장 영상이 아니라 채널 스트림으로 이동하는 링크입니다.
+- 언론사 방송은 당일 확인된 SBS/MBC/TV조선 개표방송을 페이지 안에서 바로 보여줍니다. 방송이 종료되면 카드의 `유튜브에서 보기` 링크로 확인할 수 있습니다.
+- 현재 표시 영상은 SBS `qdSrfJWkPlM`, MBC `SPDq9vB0pYs`, TV조선 `EeDftZ8E244`입니다.
+- KBS 개표 라이브 `hMILhRIIOaI`, `KvpScfnaXtA`도 확인했지만 현재 YouTube iframe에서 직접 재생이 막혀 있어 직접 시청 목록에서는 제외했습니다.
 - 후보/득표/개표율 값은 `data/latest.json`에 들어온 공식 POST 파싱 결과만 표시합니다.
+- `errors`는 핵심 시·도지사선거 수집 실패에 사용하고, 교육감선거처럼 보조 수집 실패는 `warnings`로 분리합니다.
 - 선관위 HTML 구조가 바뀌면 `scripts/fetch-nec-results.mjs`의 `parseVccp09`를 조정해야 합니다.

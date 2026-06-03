@@ -1,18 +1,21 @@
 const broadcasts = [
   {
-    name: "KBS News",
-    description: "KBS 뉴스 유튜브 라이브/스트림 목록",
-    url: "https://www.youtube.com/@KBSnews/streams",
+    name: "SBS News",
+    description: "SBS 개표방송",
+    videoId: "qdSrfJWkPlM",
+    url: "https://www.youtube.com/watch?v=qdSrfJWkPlM",
   },
   {
     name: "MBC News",
-    description: "MBC 뉴스 유튜브 라이브/스트림 목록",
-    url: "https://www.youtube.com/@MBCNEWS11/streams",
+    description: "MBC 개표방송",
+    videoId: "SPDq9vB0pYs",
+    url: "https://www.youtube.com/watch?v=SPDq9vB0pYs",
   },
   {
-    name: "SBS/YTN",
-    description: "SBS, YTN 등 선거 개표방송 검색",
-    url: "https://www.youtube.com/results?search_query=%EC%A7%80%EB%B0%A9%EC%84%A0%EA%B1%B0+%EA%B0%9C%ED%91%9C%EB%B0%A9%EC%86%A1+SBS+YTN+%EC%8B%A4%EC%8B%9C%EA%B0%84",
+    name: "TV조선",
+    description: "TV조선 개표방송",
+    videoId: "EeDftZ8E244",
+    url: "https://www.youtube.com/watch?v=EeDftZ8E244",
   },
 ];
 
@@ -38,8 +41,9 @@ const fallbackRegions = [
 
 const state = {
   data: null,
-  selectedCode: "1100",
+  selectedCode: null,
   filter: "",
+  autoRefreshSeconds: 60,
 };
 
 const broadcastGrid = document.querySelector("#broadcast-grid");
@@ -64,7 +68,7 @@ function isStale(isoValue) {
   if (!isoValue) return true;
   const generated = new Date(isoValue).getTime();
   if (!Number.isFinite(generated)) return true;
-  return Date.now() - generated > 10 * 60 * 1000;
+  return Date.now() - generated > 30 * 60 * 1000;
 }
 
 function statusLabel(data) {
@@ -74,8 +78,8 @@ function statusLabel(data) {
       ? { className: "warning", text: "공식 데이터 오래됨" }
       : { className: "ok", text: "공식 데이터 반영" };
   }
-  if (data.status === "fixture") return { className: "warning", text: "검증용 fixture 데이터" };
-  if (data.status === "error") return { className: "danger", text: "공식 데이터 갱신 실패" };
+  if (data.status === "fixture") return { className: "warning", text: "준비 데이터 표시 중" };
+  if (data.status === "error") return { className: "danger", text: "공식 데이터 연결 실패" };
   return { className: "warning", text: "공식 데이터 갱신 대기" };
 }
 
@@ -85,6 +89,7 @@ async function loadData() {
     const response = await fetch(`./data/latest.json?ts=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) throw new Error(`data/latest.json HTTP ${response.status}`);
     state.data = await response.json();
+    syncSelectedRegion();
   } catch (error) {
     state.data = {
       status: "error",
@@ -101,7 +106,7 @@ async function loadData() {
 
 function setLoading(isLoading) {
   refreshButton.disabled = isLoading;
-  refreshButton.textContent = isLoading ? "갱신 중" : "새로고침";
+  refreshButton.textContent = isLoading ? "갱신 중" : "지금 갱신";
 }
 
 function dataRegions() {
@@ -112,6 +117,18 @@ function dataRegions() {
     shortName: region.shortName ?? region.cityName ?? region.name,
     candidates: region.candidates ?? [],
   }));
+}
+
+function syncSelectedRegion() {
+  const regions = dataRegions();
+  if (regions.some((region) => region.cityCode === state.selectedCode)) return;
+
+  const firstReportingRegion = regions.find(hasRaceData);
+  state.selectedCode = (firstReportingRegion ?? regions[0])?.cityCode ?? state.selectedCode;
+}
+
+function hasRaceData(region) {
+  return Number(region?.totalVotes || 0) > 0 || Number(region?.countingRate || 0) > 0;
 }
 
 function renderAll() {
@@ -125,15 +142,30 @@ function renderAll() {
 function renderBroadcasts() {
   broadcastGrid.innerHTML = broadcasts
     .map(
-      (broadcast) => `
+      (broadcast) => {
+        const playerParams = "autoplay=1&mute=1&playsinline=1&rel=0";
+        const embedUrl = broadcast.videoId
+          ? `https://www.youtube.com/embed/${broadcast.videoId}?${playerParams}`
+          : `https://www.youtube.com/embed/live_stream?channel=${broadcast.channelId}&${playerParams}`;
+        return `
         <article class="broadcast-card">
-          <div>
+          <div class="broadcast-frame">
+            <iframe
+              title="${broadcast.name} live"
+              src="${embedUrl}"
+              loading="eager"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+            ></iframe>
+          </div>
+          <div class="broadcast-meta">
             <h3>${broadcast.name}</h3>
             <p class="muted">${broadcast.description}</p>
+            <a class="text-link" href="${broadcast.url}" target="_blank" rel="noreferrer">유튜브에서 보기</a>
           </div>
-          <a class="button" href="${broadcast.url}" target="_blank" rel="noreferrer">라이브 열기</a>
         </article>
-      `,
+      `;
+      },
     )
     .join("");
 }
@@ -141,7 +173,7 @@ function renderBroadcasts() {
 function renderSourceStatus() {
   const label = statusLabel(state.data);
   sourceStatus.className = `status-pill ${label.className}`;
-  sourceStatus.textContent = label.text;
+  sourceStatus.textContent = `${label.text} · 자동 갱신 중`;
 
   if (!state.data?.generatedAt) {
     updatedAt.textContent = "업데이트 대기";
@@ -280,3 +312,4 @@ refreshButton.addEventListener("click", loadData);
 renderBroadcasts();
 renderRegions();
 loadData();
+window.setInterval(loadData, state.autoRefreshSeconds * 1000);
