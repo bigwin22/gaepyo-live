@@ -255,9 +255,10 @@ function App() {
       setSelectedRaceKey(ALL_RACES);
       setRouteRequest((current) => ({ ...current, regionCode: cityCode, raceSlug: null }));
       const region = regions.find((item) => item.cityCode === cityCode);
-      if (region && selectedElection) replaceRouteForSelection(region, selectedElection, null);
+      const election = selectedElection ?? availableElections.find(({ election: item }) => item.code === selectedElectionCode)?.election;
+      if (region && election) replaceRouteForSelection(region, election, null);
     },
-    [regions, selectedElection],
+    [availableElections, regions, selectedElection, selectedElectionCode],
   );
 
   const chooseElection = useCallback(
