@@ -1,0 +1,11 @@
+{
+  "name": "지방선거 실시간 개표 허브",
+  "short_name": "개표허브",
+  "description": "2026 지방선거 실시간 개표율과 지역별 후보 우세율 확인",
+  "start_url": "https://bigwin22.github.io/gaepyo-live/",
+  "scope": "https://bigwin22.github.io/gaepyo-live/",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#1f5fbf",
+  "lang": "ko-KR"
+}
