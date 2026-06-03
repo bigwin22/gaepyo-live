@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from "https://esm.sh/react@18.3.1";
 import { createRoot } from "https://esm.sh/react-dom@18.3.1/client";
 import { Analytics } from "https://esm.sh/@vercel/analytics@2.0.1/react?deps=react@18.3.1";
+import { SpeedInsights } from "https://esm.sh/@vercel/speed-insights@2.0.0/react?deps=react@18.3.1";
 import htm from "https://esm.sh/htm@3.1.1";
 
 const html = htm.bind(React.createElement);
@@ -211,6 +212,7 @@ function App() {
       <${OfficialLinks} />
     </main>
     <${Analytics} />
+    <${SpeedInsights} />
   `;
 }
 
