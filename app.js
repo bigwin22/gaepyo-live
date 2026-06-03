@@ -2,6 +2,7 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from "https://
 import { createRoot } from "https://esm.sh/react-dom@18.3.1/client";
 import { Analytics } from "https://esm.sh/@vercel/analytics@2.0.1/react?deps=react@18.3.1";
 import htm from "https://esm.sh/htm@3.1.1";
+import { Analytics } from "https://esm.sh/@vercel/analytics@2.0.1/react";
 
 const html = htm.bind(React.createElement);
 
@@ -449,7 +450,7 @@ function RacePanel({ selectedRegion, selectedElection, races, visibleRaces, sele
       <div className="race-panel">
         <div className="race-heading">
           <div>
-            <p className="eyebrow">${selectedElection?.name ?? "선거종류"}</p>
+            <p className="eyebrow">${selectedElection?.name ?? "선���종류"}</p>
             <h3>${selectedRegion?.cityName ?? "선택 지역"}</h3>
           </div>
         </div>
