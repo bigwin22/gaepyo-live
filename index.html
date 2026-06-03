@@ -3,18 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>2026 지방선거 실시간 개표율 | 지역별 후보 우세율·개표방송</title>
+    <title>2026 지방선거 실시간 개표율 | 시장·의원·교육감 후보 우세율</title>
     <meta
       name="description"
-      content="2026년 6월 3일 제9회 전국동시지방선거 실시간 개표율, 전국 개표 상황, 지역별 후보 우세율과 SBS·MBC·TV조선 개표방송을 한 화면에서 확인하세요."
+      content="2026년 6월 3일 제9회 전국동시지방선거 실시간 개표율, 시도지사·구시군장·지방의원·교육감 후보 우세율과 SBS·MBC·TV조선 개표방송을 한 화면에서 확인하세요."
     />
     <meta
       name="keywords"
-      content="지방선거 실시간 개표, 2026 지방선거 개표율, 제9회 전국동시지방선거, 선거 개표방송, 지역별 후보 우세율, 서울시장 개표율, 부산시장 개표율, 경기지사 개표율"
+      content="지방선거 실시간 개표, 2026 지방선거 개표율, 제9회 전국동시지방선거, 선거 개표방송, 지역별 후보 우세율, 서울시장 개표율, 교육감 개표율, 지방의원 개표율, 시도의원 개표율, 구시군의원 개표율"
     />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="author" content="gaepyo-live" />
-    <meta name="theme-color" content="#1f5fbf" />
+    <meta name="theme-color" content="#2f3437" />
     <link rel="canonical" href="https://bigwin22.github.io/gaepyo-live/" />
     <link rel="icon" href="data:," />
     <link rel="manifest" href="./site.webmanifest" />
@@ -34,7 +34,7 @@
       name="twitter:description"
       content="전국 개표 상황과 지역별 후보 우세율, 주요 개표방송을 한 화면에서 확인하세요."
     />
-    <link rel="stylesheet" href="./styles.css?v=20260603-live-video" />
+    <link rel="stylesheet" href="./styles.css?v=20260603-all-election" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -51,8 +51,8 @@
             "@type": "WebPage",
             "@id": "https://bigwin22.github.io/gaepyo-live/#webpage",
             "url": "https://bigwin22.github.io/gaepyo-live/",
-            "name": "2026 지방선거 실시간 개표율 | 지역별 후보 우세율·개표방송",
-            "description": "2026년 6월 3일 제9회 전국동시지방선거 실시간 개표율, 전국 개표 상황, 지역별 후보 우세율과 주요 개표방송을 확인하는 페이지입니다.",
+            "name": "2026 지방선거 실시간 개표율 | 시장·의원·교육감 후보 우세율",
+            "description": "2026년 6월 3일 제9회 전국동시지방선거 실시간 개표율, 시도지사·구시군장·지방의원·교육감 후보 우세율과 주요 개표방송을 확인하는 페이지입니다.",
             "isPartOf": { "@id": "https://bigwin22.github.io/gaepyo-live/#website" },
             "about": {
               "@type": "Event",
@@ -89,19 +89,6 @@
     </header>
 
     <main>
-      <section class="official-grid" aria-labelledby="official-title">
-        <div>
-          <h2 id="official-title">공식 확인</h2>
-          <p>선관위 실시간 개표 페이지와 공식 개표소 현황을 빠르게 엽니다.</p>
-        </div>
-        <div class="button-row">
-          <a class="button primary" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=VC&secondMenuId=VCCP09" target="_blank" rel="noreferrer">개표진행상황</a>
-          <a class="button" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=VC&secondMenuId=VCCP08" target="_blank" rel="noreferrer">개표단위별 결과</a>
-          <a class="button" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=BI&secondMenuId=BICP01" target="_blank" rel="noreferrer">공식 개표소 현황</a>
-          <a class="button" href="https://www.nec.go.kr/" target="_blank" rel="noreferrer">선관위</a>
-        </div>
-      </section>
-
       <section aria-labelledby="live-title">
         <div class="section-title">
           <h2 id="live-title">언론사 실시간 방송</h2>
@@ -120,6 +107,7 @@
           </div>
         </div>
         <div class="national-grid" id="national-grid"></div>
+        <div class="election-tabs" id="election-tabs" aria-label="선거종류 선택"></div>
         <div class="results-layout">
           <aside class="region-list" id="region-list"></aside>
           <div class="race-panel" id="race-panel">
@@ -127,8 +115,21 @@
           </div>
         </div>
       </section>
+
+      <section class="official-grid" aria-labelledby="official-title">
+        <div>
+          <h2 id="official-title">공식 확인</h2>
+          <p>선관위 실시간 개표 페이지와 공식 개표소 현황을 빠르게 엽니다.</p>
+        </div>
+        <div class="button-row">
+          <a class="button primary" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=VC&secondMenuId=VCCP09" target="_blank" rel="noreferrer">개표진행상황</a>
+          <a class="button" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=VC&secondMenuId=VCCP08" target="_blank" rel="noreferrer">개표단위별 결과</a>
+          <a class="button" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=BI&secondMenuId=BICP01" target="_blank" rel="noreferrer">공식 개표소 현황</a>
+          <a class="button" href="https://www.nec.go.kr/" target="_blank" rel="noreferrer">선관위</a>
+        </div>
+      </section>
     </main>
 
-    <script src="./app.js?v=20260603-autoplay"></script>
+    <script src="./app.js?v=20260603-all-election"></script>
   </body>
 </html>
