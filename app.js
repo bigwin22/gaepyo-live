@@ -249,17 +249,27 @@ function App() {
     replaceRouteForSelection(selectedRegion, selectedElection, selectedRace);
   }, [races, routeRequest, selectedElection, selectedRaceKey, selectedRegion]);
 
-  const chooseRegion = useCallback((cityCode) => {
-    setSelectedCode(cityCode);
-    setSelectedRaceKey(ALL_RACES);
-    setRouteRequest((current) => ({ ...current, regionCode: cityCode, raceSlug: null }));
-  }, []);
+  const chooseRegion = useCallback(
+    (cityCode) => {
+      setSelectedCode(cityCode);
+      setSelectedRaceKey(ALL_RACES);
+      setRouteRequest((current) => ({ ...current, regionCode: cityCode, raceSlug: null }));
+      const region = regions.find((item) => item.cityCode === cityCode);
+      if (region && selectedElection) replaceRouteForSelection(region, selectedElection, null);
+    },
+    [regions, selectedElection],
+  );
 
-  const chooseElection = useCallback((electionCode) => {
-    setSelectedElectionCode(electionCode);
-    setSelectedRaceKey(ALL_RACES);
-    setRouteRequest((current) => ({ ...current, electionCode, raceSlug: null }));
-  }, []);
+  const chooseElection = useCallback(
+    (electionCode) => {
+      setSelectedElectionCode(electionCode);
+      setSelectedRaceKey(ALL_RACES);
+      setRouteRequest((current) => ({ ...current, electionCode, raceSlug: null }));
+      const election = availableElections.find(({ election: item }) => item.code === electionCode)?.election;
+      if (selectedRegion && election) replaceRouteForSelection(selectedRegion, election, null);
+    },
+    [availableElections, selectedRegion],
+  );
 
   const submitSearch = useCallback(
     (event) => {
