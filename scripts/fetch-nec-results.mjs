@@ -273,7 +273,7 @@ function buildPayload({ status, regions, educationRegions = [], errors }) {
       method: "POST",
       menuId: "VCCP09",
       note: sourceNote,
-      verified: status !== "initial",
+      verified: status === "ok" || status === "fixture",
     },
     updatePolicy: {
       mode: "github-actions-scheduled",
