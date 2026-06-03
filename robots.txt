@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://gaepyo-live.vercel.app/sitemap.xml
+Sitemap: https://vote.gubiko.com/sitemap.xml
