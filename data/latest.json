@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "status": "ok",
-  "generatedAt": "2026-06-03T11:10:17.886Z",
+  "generatedAt": "2026-06-03T11:29:31.916Z",
   "electionId": "0020260603",
   "source": {
     "name": "중앙선거관리위원회 선거통계시스템",
@@ -19,11 +19,11 @@
   "national": {
     "regionCount": 17,
     "reportingRegions": 16,
-    "averageCountingRate": 1.43,
-    "totalVotes": 262384,
-    "validVotes": 253633,
-    "invalidVotes": 8751,
-    "electorateCounted": 397200
+    "averageCountingRate": 2.82,
+    "totalVotes": 560375,
+    "validVotes": 543078,
+    "invalidVotes": 17297,
+    "electorateCounted": 861345
   },
   "regions": [
     {
@@ -33,63 +33,63 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 304,
-      "totalVotes": 304,
-      "validVotes": 303,
-      "invalidVotes": 1,
+      "electorateCounted": 702,
+      "totalVotes": 702,
+      "validVotes": 698,
+      "invalidVotes": 4,
       "abstentions": 0,
       "countingRate": 0.01,
       "leader": {
         "rank": 1,
         "party": "더불어민주당",
         "name": "정원오",
-        "votes": 217,
-        "rate": 71.61
+        "votes": 463,
+        "rate": 66.33
       },
       "runnerUp": {
         "rank": 2,
         "party": "국민의힘",
         "name": "오세훈",
-        "votes": 78,
-        "rate": 25.74
+        "votes": 215,
+        "rate": 30.8
       },
-      "voteGap": 139,
-      "rateGap": 45.87,
+      "voteGap": 248,
+      "rateGap": 35.53,
       "candidates": [
         {
           "rank": 1,
           "party": "더불어민주당",
           "name": "정원오",
-          "votes": 217,
-          "rate": 71.61
+          "votes": 463,
+          "rate": 66.33
         },
         {
           "rank": 2,
           "party": "국민의힘",
           "name": "오세훈",
-          "votes": 78,
-          "rate": 25.74
+          "votes": 215,
+          "rate": 30.8
         },
         {
           "rank": 3,
           "party": "정의당",
           "name": "권영국",
-          "votes": 6,
-          "rate": 1.98
+          "votes": 13,
+          "rate": 1.86
         },
         {
           "rank": 4,
           "party": "개혁신당",
           "name": "김정철",
-          "votes": 1,
-          "rate": 0.33
+          "votes": 4,
+          "rate": 0.57
         },
         {
           "rank": 5,
           "party": "여성의당",
           "name": "유지혜",
-          "votes": 1,
-          "rate": 0.33
+          "votes": 3,
+          "rate": 0.42
         }
       ]
     },
@@ -100,49 +100,49 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 10570,
-      "totalVotes": 6276,
-      "validVotes": 6158,
-      "invalidVotes": 118,
-      "abstentions": 4294,
-      "countingRate": 0.35,
+      "electorateCounted": 26408,
+      "totalVotes": 16494,
+      "validVotes": 16179,
+      "invalidVotes": 315,
+      "abstentions": 9914,
+      "countingRate": 0.93,
       "leader": {
         "rank": 1,
         "party": "국민의힘",
         "name": "박형준",
-        "votes": 3430,
-        "rate": 55.69
+        "votes": 8385,
+        "rate": 51.82
       },
       "runnerUp": {
         "rank": 2,
         "party": "더불어민주당",
         "name": "전재수",
-        "votes": 2645,
-        "rate": 42.95
+        "votes": 7563,
+        "rate": 46.74
       },
-      "voteGap": 785,
-      "rateGap": 12.74,
+      "voteGap": 822,
+      "rateGap": 5.08,
       "candidates": [
         {
           "rank": 1,
           "party": "국민의힘",
           "name": "박형준",
-          "votes": 3430,
-          "rate": 55.69
+          "votes": 8385,
+          "rate": 51.82
         },
         {
           "rank": 2,
           "party": "더불어민주당",
           "name": "전재수",
-          "votes": 2645,
-          "rate": 42.95
+          "votes": 7563,
+          "rate": 46.74
         },
         {
           "rank": 3,
           "party": "개혁신당",
           "name": "정이한",
-          "votes": 83,
-          "rate": 1.34
+          "votes": 231,
+          "rate": 1.42
         }
       ]
     },
@@ -153,49 +153,49 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 10674,
-      "totalVotes": 6996,
-      "validVotes": 6860,
-      "invalidVotes": 136,
-      "abstentions": 3678,
-      "countingRate": 0.53,
+      "electorateCounted": 32307,
+      "totalVotes": 24797,
+      "validVotes": 24436,
+      "invalidVotes": 361,
+      "abstentions": 7510,
+      "countingRate": 1.88,
       "leader": {
         "rank": 1,
         "party": "국민의힘",
         "name": "추경호",
-        "votes": 4161,
-        "rate": 60.65
+        "votes": 12364,
+        "rate": 50.59
       },
       "runnerUp": {
         "rank": 2,
         "party": "더불어민주당",
         "name": "김부겸",
-        "votes": 2638,
-        "rate": 38.45
+        "votes": 11828,
+        "rate": 48.4
       },
-      "voteGap": 1523,
-      "rateGap": 22.2,
+      "voteGap": 536,
+      "rateGap": 2.19,
       "candidates": [
         {
           "rank": 1,
           "party": "국민의힘",
           "name": "추경호",
-          "votes": 4161,
-          "rate": 60.65
+          "votes": 12364,
+          "rate": 50.59
         },
         {
           "rank": 2,
           "party": "더불어민주당",
           "name": "김부겸",
-          "votes": 2638,
-          "rate": 38.45
+          "votes": 11828,
+          "rate": 48.4
         },
         {
           "rank": 3,
           "party": "개혁신당",
           "name": "이수찬",
-          "votes": 61,
-          "rate": 0.88
+          "votes": 244,
+          "rate": 0.99
         }
       ]
     },
@@ -206,49 +206,49 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 4350,
-      "totalVotes": 4349,
-      "validVotes": 4141,
-      "invalidVotes": 208,
-      "abstentions": 1,
-      "countingRate": 0.28,
+      "electorateCounted": 6274,
+      "totalVotes": 6260,
+      "validVotes": 5981,
+      "invalidVotes": 279,
+      "abstentions": 14,
+      "countingRate": 0.41,
       "leader": {
         "rank": 1,
         "party": "국민의힘",
         "name": "유정복",
-        "votes": 2171,
-        "rate": 52.42
+        "votes": 3109,
+        "rate": 51.98
       },
       "runnerUp": {
         "rank": 2,
         "party": "더불어민주당",
         "name": "박찬대",
-        "votes": 1933,
-        "rate": 46.67
+        "votes": 2823,
+        "rate": 47.19
       },
-      "voteGap": 238,
-      "rateGap": 5.75,
+      "voteGap": 286,
+      "rateGap": 4.79,
       "candidates": [
         {
           "rank": 1,
           "party": "국민의힘",
           "name": "유정복",
-          "votes": 2171,
-          "rate": 52.42
+          "votes": 3109,
+          "rate": 51.98
         },
         {
           "rank": 2,
           "party": "더불어민주당",
           "name": "박찬대",
-          "votes": 1933,
-          "rate": 46.67
+          "votes": 2823,
+          "rate": 47.19
         },
         {
           "rank": 3,
           "party": "개혁신당",
           "name": "이기붕",
-          "votes": 37,
-          "rate": 0.89
+          "votes": 49,
+          "rate": 0.81
         }
       ]
     },
@@ -259,63 +259,63 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 23006,
-      "totalVotes": 20674,
-      "validVotes": 19540,
-      "invalidVotes": 1134,
-      "abstentions": 2332,
-      "countingRate": 1.24,
+      "electorateCounted": 51491,
+      "totalVotes": 42203,
+      "validVotes": 39960,
+      "invalidVotes": 2243,
+      "abstentions": 9288,
+      "countingRate": 2.53,
       "leader": {
         "rank": 1,
         "party": "더불어민주당",
         "name": "민형배",
-        "votes": 16015,
-        "rate": 81.96
+        "votes": 32684,
+        "rate": 81.79
       },
       "runnerUp": {
         "rank": 2,
         "party": "국민의힘",
         "name": "이정현",
-        "votes": 1763,
+        "votes": 3605,
         "rate": 9.02
       },
-      "voteGap": 14252,
-      "rateGap": 72.94,
+      "voteGap": 29079,
+      "rateGap": 72.77,
       "candidates": [
         {
           "rank": 1,
           "party": "더불어민주당",
           "name": "민형배",
-          "votes": 16015,
-          "rate": 81.96
+          "votes": 32684,
+          "rate": 81.79
         },
         {
           "rank": 2,
           "party": "국민의힘",
           "name": "이정현",
-          "votes": 1763,
+          "votes": 3605,
           "rate": 9.02
         },
         {
           "rank": 3,
           "party": "진보당",
           "name": "이종욱",
-          "votes": 768,
-          "rate": 3.93
+          "votes": 1501,
+          "rate": 3.75
         },
         {
           "rank": 4,
           "party": "정의당",
           "name": "강은미",
-          "votes": 625,
-          "rate": 3.19
+          "votes": 1432,
+          "rate": 3.58
         },
         {
           "rank": 5,
           "party": "무소속",
           "name": "김광만",
-          "votes": 369,
-          "rate": 1.88
+          "votes": 738,
+          "rate": 1.84
         }
       ]
     },
@@ -326,49 +326,49 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 1392,
-      "totalVotes": 1392,
-      "validVotes": 1374,
-      "invalidVotes": 18,
-      "abstentions": 0,
-      "countingRate": 0.19,
+      "electorateCounted": 3736,
+      "totalVotes": 3040,
+      "validVotes": 2995,
+      "invalidVotes": 45,
+      "abstentions": 696,
+      "countingRate": 0.41,
       "leader": {
         "rank": 1,
         "party": "더불어민주당",
         "name": "허태정",
-        "votes": 923,
-        "rate": 67.17
+        "votes": 1744,
+        "rate": 58.23
       },
       "runnerUp": {
         "rank": 2,
         "party": "국민의힘",
         "name": "이장우",
-        "votes": 429,
-        "rate": 31.22
+        "votes": 1207,
+        "rate": 40.3
       },
-      "voteGap": 494,
-      "rateGap": 35.95,
+      "voteGap": 537,
+      "rateGap": 17.93,
       "candidates": [
         {
           "rank": 1,
           "party": "더불어민주당",
           "name": "허태정",
-          "votes": 923,
-          "rate": 67.17
+          "votes": 1744,
+          "rate": 58.23
         },
         {
           "rank": 2,
           "party": "국민의힘",
           "name": "이장우",
-          "votes": 429,
-          "rate": 31.22
+          "votes": 1207,
+          "rate": 40.3
         },
         {
           "rank": 3,
           "party": "개혁신당",
           "name": "강희린",
-          "votes": 22,
-          "rate": 1.6
+          "votes": 44,
+          "rate": 1.46
         }
       ]
     },
@@ -432,49 +432,49 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 2524,
-      "totalVotes": 1382,
-      "validVotes": 1371,
-      "invalidVotes": 11,
-      "abstentions": 1142,
-      "countingRate": 0.72,
+      "electorateCounted": 9472,
+      "totalVotes": 4636,
+      "validVotes": 4602,
+      "invalidVotes": 34,
+      "abstentions": 4836,
+      "countingRate": 2.4,
       "leader": {
         "rank": 1,
         "party": "더불어민주당",
         "name": "조상호",
-        "votes": 701,
-        "rate": 51.13
+        "votes": 2272,
+        "rate": 49.36
       },
       "runnerUp": {
         "rank": 2,
         "party": "국민의힘",
         "name": "최민호",
-        "votes": 622,
-        "rate": 45.36
+        "votes": 2164,
+        "rate": 47.02
       },
-      "voteGap": 79,
-      "rateGap": 5.77,
+      "voteGap": 108,
+      "rateGap": 2.34,
       "candidates": [
         {
           "rank": 1,
           "party": "더불어민주당",
           "name": "조상호",
-          "votes": 701,
-          "rate": 51.13
+          "votes": 2272,
+          "rate": 49.36
         },
         {
           "rank": 2,
           "party": "국민의힘",
           "name": "최민호",
-          "votes": 622,
-          "rate": 45.36
+          "votes": 2164,
+          "rate": 47.02
         },
         {
           "rank": 3,
           "party": "개혁신당",
           "name": "하헌휘",
-          "votes": 48,
-          "rate": 3.5
+          "votes": 166,
+          "rate": 3.6
         }
       ]
     },
@@ -485,63 +485,63 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 137555,
-      "totalVotes": 63185,
-      "validVotes": 62077,
-      "invalidVotes": 1108,
-      "abstentions": 74370,
-      "countingRate": 0.91,
+      "electorateCounted": 321320,
+      "totalVotes": 149584,
+      "validVotes": 146899,
+      "invalidVotes": 2685,
+      "abstentions": 171736,
+      "countingRate": 2.16,
       "leader": {
         "rank": 1,
         "party": "국민의힘",
         "name": "양향자",
-        "votes": 30356,
-        "rate": 48.9
+        "votes": 70318,
+        "rate": 47.86
       },
       "runnerUp": {
         "rank": 2,
         "party": "더불어민주당",
         "name": "추미애",
-        "votes": 28029,
-        "rate": 45.15
+        "votes": 67863,
+        "rate": 46.19
       },
-      "voteGap": 2327,
-      "rateGap": 3.75,
+      "voteGap": 2455,
+      "rateGap": 1.67,
       "candidates": [
         {
           "rank": 1,
           "party": "국민의힘",
           "name": "양향자",
-          "votes": 30356,
-          "rate": 48.9
+          "votes": 70318,
+          "rate": 47.86
         },
         {
           "rank": 2,
           "party": "더불어민주당",
           "name": "추미애",
-          "votes": 28029,
-          "rate": 45.15
+          "votes": 67863,
+          "rate": 46.19
         },
         {
           "rank": 3,
           "party": "개혁신당",
           "name": "조응천",
-          "votes": 2889,
-          "rate": 4.65
+          "votes": 6804,
+          "rate": 4.63
         },
         {
           "rank": 4,
           "party": "국민연합",
           "name": "김현욱",
-          "votes": 424,
-          "rate": 0.68
+          "votes": 972,
+          "rate": 0.66
         },
         {
           "rank": 5,
           "party": "진보당",
           "name": "홍성규",
-          "votes": 379,
-          "rate": 0.61
+          "votes": 942,
+          "rate": 0.64
         }
       ]
     },
@@ -552,42 +552,42 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 18770,
-      "totalVotes": 17729,
-      "validVotes": 17264,
-      "invalidVotes": 465,
-      "abstentions": 1041,
-      "countingRate": 2.07,
+      "electorateCounted": 37562,
+      "totalVotes": 33971,
+      "validVotes": 33060,
+      "invalidVotes": 911,
+      "abstentions": 3591,
+      "countingRate": 3.96,
       "leader": {
         "rank": 1,
         "party": "더불어민주당",
         "name": "우상호",
-        "votes": 9662,
-        "rate": 55.96
+        "votes": 17856,
+        "rate": 54.01
       },
       "runnerUp": {
         "rank": 2,
         "party": "국민의힘",
         "name": "김진태",
-        "votes": 7602,
-        "rate": 44.03
+        "votes": 15204,
+        "rate": 45.98
       },
-      "voteGap": 2060,
-      "rateGap": 11.93,
+      "voteGap": 2652,
+      "rateGap": 8.03,
       "candidates": [
         {
           "rank": 1,
           "party": "더불어민주당",
           "name": "우상호",
-          "votes": 9662,
-          "rate": 55.96
+          "votes": 17856,
+          "rate": 54.01
         },
         {
           "rank": 2,
           "party": "국민의힘",
           "name": "김진태",
-          "votes": 7602,
-          "rate": 44.03
+          "votes": 15204,
+          "rate": 45.98
         }
       ]
     },
@@ -598,42 +598,42 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 24341,
-      "totalVotes": 22597,
-      "validVotes": 21744,
-      "invalidVotes": 853,
-      "abstentions": 1744,
-      "countingRate": 2.71,
+      "electorateCounted": 64159,
+      "totalVotes": 47087,
+      "validVotes": 45720,
+      "invalidVotes": 1367,
+      "abstentions": 17072,
+      "countingRate": 5.66,
       "leader": {
         "rank": 1,
         "party": "더불어민주당",
         "name": "신용한",
-        "votes": 11884,
-        "rate": 54.65
+        "votes": 24362,
+        "rate": 53.28
       },
       "runnerUp": {
         "rank": 2,
         "party": "국민의힘",
         "name": "김영환",
-        "votes": 9860,
-        "rate": 45.34
+        "votes": 21358,
+        "rate": 46.71
       },
-      "voteGap": 2024,
-      "rateGap": 9.31,
+      "voteGap": 3004,
+      "rateGap": 6.57,
       "candidates": [
         {
           "rank": 1,
           "party": "더불어민주당",
           "name": "신용한",
-          "votes": 11884,
-          "rate": 54.65
+          "votes": 24362,
+          "rate": 53.28
         },
         {
           "rank": 2,
           "party": "국민의힘",
           "name": "김영환",
-          "votes": 9860,
-          "rate": 45.34
+          "votes": 21358,
+          "rate": 46.71
         }
       ]
     },
@@ -644,42 +644,42 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 4306,
-      "totalVotes": 4305,
-      "validVotes": 4136,
-      "invalidVotes": 169,
-      "abstentions": 1,
-      "countingRate": 0.39,
+      "electorateCounted": 14272,
+      "totalVotes": 14262,
+      "validVotes": 13723,
+      "invalidVotes": 539,
+      "abstentions": 10,
+      "countingRate": 1.31,
       "leader": {
         "rank": 1,
         "party": "더불어민주당",
         "name": "박수현",
-        "votes": 2391,
-        "rate": 57.8
+        "votes": 8038,
+        "rate": 58.57
       },
       "runnerUp": {
         "rank": 2,
         "party": "국민의힘",
         "name": "김태흠",
-        "votes": 1745,
-        "rate": 42.19
+        "votes": 5685,
+        "rate": 41.42
       },
-      "voteGap": 646,
-      "rateGap": 15.61,
+      "voteGap": 2353,
+      "rateGap": 17.15,
       "candidates": [
         {
           "rank": 1,
           "party": "더불어민주당",
           "name": "박수현",
-          "votes": 2391,
-          "rate": 57.8
+          "votes": 8038,
+          "rate": 58.57
         },
         {
           "rank": 2,
           "party": "국민의힘",
           "name": "김태흠",
-          "votes": 1745,
-          "rate": 42.19
+          "votes": 5685,
+          "rate": 41.42
         }
       ]
     },
@@ -690,63 +690,63 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 32731,
-      "totalVotes": 21429,
-      "validVotes": 20520,
-      "invalidVotes": 909,
-      "abstentions": 11302,
-      "countingRate": 2.26,
+      "electorateCounted": 62176,
+      "totalVotes": 41444,
+      "validVotes": 39779,
+      "invalidVotes": 1665,
+      "abstentions": 20732,
+      "countingRate": 4.38,
       "leader": {
         "rank": 1,
         "party": "더불어민주당",
         "name": "이원택",
-        "votes": 10975,
-        "rate": 53.48
+        "votes": 21065,
+        "rate": 52.95
       },
       "runnerUp": {
         "rank": 2,
         "party": "무소속",
         "name": "김관영",
-        "votes": 7902,
-        "rate": 38.5
+        "votes": 15709,
+        "rate": 39.49
       },
-      "voteGap": 3073,
-      "rateGap": 14.98,
+      "voteGap": 5356,
+      "rateGap": 13.46,
       "candidates": [
         {
           "rank": 1,
           "party": "더불어민주당",
           "name": "이원택",
-          "votes": 10975,
-          "rate": 53.48
+          "votes": 21065,
+          "rate": 52.95
         },
         {
           "rank": 2,
           "party": "무소속",
           "name": "김관영",
-          "votes": 7902,
-          "rate": 38.5
+          "votes": 15709,
+          "rate": 39.49
         },
         {
           "rank": 3,
           "party": "국민의힘",
           "name": "양정무",
-          "votes": 861,
-          "rate": 4.19
+          "votes": 1614,
+          "rate": 4.05
         },
         {
           "rank": 4,
           "party": "진보당",
           "name": "백승재",
-          "votes": 418,
-          "rate": 2.03
+          "votes": 736,
+          "rate": 1.85
         },
         {
           "rank": 5,
           "party": "무소속",
           "name": "김성수",
-          "votes": 364,
-          "rate": 1.77
+          "votes": 655,
+          "rate": 1.64
         }
       ]
     },
@@ -757,63 +757,63 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 19563,
-      "totalVotes": 19547,
-      "validVotes": 18446,
-      "invalidVotes": 1101,
-      "abstentions": 16,
-      "countingRate": 1.91,
+      "electorateCounted": 37122,
+      "totalVotes": 36292,
+      "validVotes": 34215,
+      "invalidVotes": 2077,
+      "abstentions": 830,
+      "countingRate": 3.54,
       "leader": {
         "rank": 1,
         "party": "더불어민주당",
         "name": "민형배",
-        "votes": 15222,
-        "rate": 82.52
+        "votes": 28346,
+        "rate": 82.84
       },
       "runnerUp": {
         "rank": 2,
         "party": "국민의힘",
         "name": "이정현",
-        "votes": 1598,
-        "rate": 8.66
+        "votes": 2939,
+        "rate": 8.58
       },
-      "voteGap": 13624,
-      "rateGap": 73.86,
+      "voteGap": 25407,
+      "rateGap": 74.26,
       "candidates": [
         {
           "rank": 1,
           "party": "더불어민주당",
           "name": "민형배",
-          "votes": 15222,
-          "rate": 82.52
+          "votes": 28346,
+          "rate": 82.84
         },
         {
           "rank": 2,
           "party": "국민의힘",
           "name": "이정현",
-          "votes": 1598,
-          "rate": 8.66
+          "votes": 2939,
+          "rate": 8.58
         },
         {
           "rank": 3,
           "party": "진보당",
           "name": "이종욱",
-          "votes": 703,
-          "rate": 3.81
+          "votes": 1184,
+          "rate": 3.46
         },
         {
           "rank": 4,
           "party": "정의당",
           "name": "강은미",
-          "votes": 573,
-          "rate": 3.1
+          "votes": 1089,
+          "rate": 3.18
         },
         {
           "rank": 5,
           "party": "무소속",
           "name": "김광만",
-          "votes": 350,
-          "rate": 1.89
+          "votes": 657,
+          "rate": 1.92
         }
       ]
     },
@@ -824,42 +824,42 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 29015,
-      "totalVotes": 26936,
-      "validVotes": 25578,
-      "invalidVotes": 1358,
-      "abstentions": 2079,
-      "countingRate": 2.01,
+      "electorateCounted": 60454,
+      "totalVotes": 53987,
+      "validVotes": 51488,
+      "invalidVotes": 2499,
+      "abstentions": 6467,
+      "countingRate": 4.03,
       "leader": {
         "rank": 1,
         "party": "국민의힘",
         "name": "이철우",
-        "votes": 17949,
-        "rate": 70.17
+        "votes": 36630,
+        "rate": 71.14
       },
       "runnerUp": {
         "rank": 2,
         "party": "더불어민주당",
         "name": "오중기",
-        "votes": 7629,
-        "rate": 29.82
+        "votes": 14858,
+        "rate": 28.85
       },
-      "voteGap": 10320,
-      "rateGap": 40.35,
+      "voteGap": 21772,
+      "rateGap": 42.29,
       "candidates": [
         {
           "rank": 1,
           "party": "국민의힘",
           "name": "이철우",
-          "votes": 17949,
-          "rate": 70.17
+          "votes": 36630,
+          "rate": 71.14
         },
         {
           "rank": 2,
           "party": "더불어민주당",
           "name": "오중기",
-          "votes": 7629,
-          "rate": 29.82
+          "votes": 14858,
+          "rate": 28.85
         }
       ]
     },
@@ -870,42 +870,42 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 22068,
-      "totalVotes": 20923,
-      "validVotes": 20138,
-      "invalidVotes": 785,
-      "abstentions": 1145,
-      "countingRate": 1.17,
+      "electorateCounted": 54094,
+      "totalVotes": 48668,
+      "validVotes": 46973,
+      "invalidVotes": 1695,
+      "abstentions": 5426,
+      "countingRate": 2.72,
       "leader": {
         "rank": 1,
         "party": "국민의힘",
         "name": "박완수",
-        "votes": 10449,
-        "rate": 51.88
+        "votes": 24059,
+        "rate": 51.21
       },
       "runnerUp": {
         "rank": 2,
         "party": "더불어민주당",
         "name": "김경수",
-        "votes": 9689,
-        "rate": 48.11
+        "votes": 22914,
+        "rate": 48.78
       },
-      "voteGap": 760,
-      "rateGap": 3.77,
+      "voteGap": 1145,
+      "rateGap": 2.43,
       "candidates": [
         {
           "rank": 1,
           "party": "국민의힘",
           "name": "박완수",
-          "votes": 10449,
-          "rate": 51.88
+          "votes": 24059,
+          "rate": 51.21
         },
         {
           "rank": 2,
           "party": "더불어민주당",
           "name": "김경수",
-          "votes": 9689,
-          "rate": 48.11
+          "votes": 22914,
+          "rate": 48.78
         }
       ]
     },
@@ -916,49 +916,49 @@
       "electionCode": "3",
       "electionName": "시·도지사선거",
       "unitName": "합계",
-      "electorateCounted": 56031,
-      "totalVotes": 24360,
-      "validVotes": 23983,
-      "invalidVotes": 377,
-      "abstentions": 31671,
-      "countingRate": 7.63,
+      "electorateCounted": 79796,
+      "totalVotes": 36948,
+      "validVotes": 36370,
+      "invalidVotes": 578,
+      "abstentions": 42848,
+      "countingRate": 11.58,
       "leader": {
         "rank": 1,
         "party": "더불어민주당",
         "name": "위성곤",
-        "votes": 13243,
-        "rate": 55.21
+        "votes": 20965,
+        "rate": 57.64
       },
       "runnerUp": {
         "rank": 2,
         "party": "국민의힘",
         "name": "문성유",
-        "votes": 9973,
-        "rate": 41.58
+        "votes": 14286,
+        "rate": 39.27
       },
-      "voteGap": 3270,
-      "rateGap": 13.63,
+      "voteGap": 6679,
+      "rateGap": 18.37,
       "candidates": [
         {
           "rank": 1,
           "party": "더불어민주당",
           "name": "위성곤",
-          "votes": 13243,
-          "rate": 55.21
+          "votes": 20965,
+          "rate": 57.64
         },
         {
           "rank": 2,
           "party": "국민의힘",
           "name": "문성유",
-          "votes": 9973,
-          "rate": 41.58
+          "votes": 14286,
+          "rate": 39.27
         },
         {
           "rank": 3,
           "party": "무소속",
           "name": "양윤녕",
-          "votes": 767,
-          "rate": 3.19
+          "votes": 1119,
+          "rate": 3.07
         }
       ]
     }
