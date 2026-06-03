@@ -182,16 +182,16 @@ async function collectElection(electionType, errors, warnings, photoCache) {
 
   let regions = sortByKoreanName([...regionMap.values()], (region) => region.cityName ?? region.name);
 
-  if (electionType.primary && runtimeOptions.withPhotos) {
-    const photoEntries = await mapLimit(regions, CONCURRENCY_LIMIT, async (region) => {
+  if (runtimeOptions.withPhotos) {
+    const photoEntries = await mapLimit(results, CONCURRENCY_LIMIT, async ({ task }) => {
       try {
-        return [region.cityCode, await fetchCandidatePhotos(region.cityCode, electionType)];
+        return [task.city.code, await fetchCandidatePhotos(task, electionType)];
       } catch (error) {
-        warnings.push(`${region.cityName} 후보 사진: ${error.message}`);
-        return [region.cityCode, new Map()];
+        warnings.push(`${task.city.name} ${task.areaName ? `${task.areaName} ` : ""}${electionType.name} 후보 사진: ${error.message}`);
+        return [task.city.code, new Map()];
       }
     });
-    const photoMapByCity = new Map(photoEntries);
+    const photoMapByCity = mergePhotoEntriesByCity(photoEntries);
     regions = regions.map((region) => {
       const photoMap = photoMapByCity.get(region.cityCode) ?? new Map();
       return {
@@ -295,7 +295,7 @@ async function fetchVccp09(task, electionType) {
   return response.text();
 }
 
-async function fetchCandidatePhotos(cityCode, electionType) {
+async function fetchCandidatePhotos(task, electionType) {
   const body = new URLSearchParams({
     electionId: ELECTION_ID,
     requestURI: CANDIDATE_REQUEST_URI,
@@ -304,10 +304,10 @@ async function fetchCandidatePhotos(cityCode, electionType) {
     menuId: "CPRI03",
     statementId: `CPRI03_#${electionType.code}`,
     electionCode: electionType.code,
-    cityCode,
-    townCode: "-1",
-    sggCityCode: "-1",
-    sggTownCode: "-1",
+    cityCode: task.city.code,
+    townCode: task.townCode,
+    sggCityCode: task.sggCityCode,
+    sggTownCode: task.sggTownCode,
   });
 
   const response = await fetch(NEC_ENDPOINT, {
@@ -324,6 +324,18 @@ async function fetchCandidatePhotos(cityCode, electionType) {
   }
 
   return parseCandidatePhotos(await response.text());
+}
+
+function mergePhotoEntriesByCity(entries) {
+  const merged = new Map();
+  for (const [cityCode, photoMap] of entries) {
+    const cityMap = merged.get(cityCode) ?? new Map();
+    for (const [key, value] of photoMap) {
+      if (!cityMap.has(key)) cityMap.set(key, value);
+    }
+    merged.set(cityCode, cityMap);
+  }
+  return merged;
 }
 
 async function fetchTownCodes(city, electionType) {
@@ -425,8 +437,8 @@ function parseCandidatePhotos(html) {
     const cells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((cellMatch) => cellMatch[1]);
     if (cells.length < 5) continue;
 
-    const party = cleanCell(cells[3]);
-    const name = cleanCandidateName(cleanCell(cells[4]));
+    const party = extractCandidateParty(cells);
+    const name = extractCandidateName(cells);
     if (!name) continue;
 
     const candidateId = rowHtml.match(/popupHBJ\(['"][^'"]+['"],\s*['"]([^'"]+)['"]\)/i)?.[1] ?? "";
@@ -440,6 +452,36 @@ function parseCandidatePhotos(html) {
   }
 
   return photos;
+}
+
+function extractCandidateName(cells) {
+  for (const cell of cells) {
+    const rawValue = cleanCell(cell);
+    const value = cleanCandidateName(rawValue);
+    if (isLikelyCandidateName(rawValue, value)) return value;
+  }
+  return "";
+}
+
+function extractCandidateParty(cells) {
+  for (const cell of cells) {
+    const value = cleanCell(cell);
+    if (isLikelyPartyCell(value)) return value.replace(/\s*\(\d+\)\s*$/, "");
+  }
+  return "";
+}
+
+function isLikelyCandidateName(rawValue, value) {
+  return (
+    /^[가-힣]{2,4}$/.test(value) &&
+    /\([^)]+\)/.test(rawValue) &&
+    !/[0-9]{4}\./.test(rawValue) &&
+    !isLikelyPartyCell(rawValue)
+  );
+}
+
+function isLikelyPartyCell(value) {
+  return /당|무소속|교육감후보|연대|연합/.test(value) && !/[0-9]{4}\./.test(value);
 }
 
 async function readPhotoCache(path) {
@@ -582,7 +624,7 @@ function attachCandidatePhotos(race, photoMap) {
 
   const candidates = race.candidates.map((candidate) => ({
     ...candidate,
-    ...(photoMap.get(candidateKey(candidate.name, candidate.party)) ?? {}),
+    ...(findCandidatePhoto(candidate, photoMap) ?? {}),
   }));
 
   return {
@@ -591,6 +633,23 @@ function attachCandidatePhotos(race, photoMap) {
     leader: candidates[0] ?? race.leader,
     runnerUp: candidates[1] ?? race.runnerUp,
   };
+}
+
+function findCandidatePhoto(candidate, photoMap) {
+  const exactMatch = photoMap.get(candidateKey(candidate.name, candidate.party));
+  if (exactMatch) return exactMatch;
+
+  const normalizedName = normalizeKey(candidate.name);
+  if (!normalizedName) return null;
+
+  let nameMatch = null;
+  for (const [key, value] of photoMap) {
+    const [photoName] = key.split("|");
+    if (photoName !== normalizedName) continue;
+    if (nameMatch) return null;
+    nameMatch = value;
+  }
+  return nameMatch;
 }
 
 function buildUnitName(candidateRow, resultRow, electorateIndex, context) {
