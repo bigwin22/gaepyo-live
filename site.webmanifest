@@ -2,10 +2,33 @@
   "name": "지방선거 실시간 개표 허브",
   "short_name": "개표허브",
   "description": "2026 지방선거 실시간 개표율과 지역별 후보 우세율 확인",
+  "id": "https://vote.gubiko.com/",
   "start_url": "https://vote.gubiko.com/",
   "scope": "https://vote.gubiko.com/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#f5f5f4",
   "theme_color": "#2f3437",
-  "lang": "ko-KR"
+  "lang": "ko-KR",
+  "categories": ["news", "government"],
+  "icons": [
+    {
+      "src": "https://vote.gubiko.com/assets/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://vote.gubiko.com/assets/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://vote.gubiko.com/assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }

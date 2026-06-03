@@ -2,6 +2,11 @@
   "name": "gaepyo-live",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "npm run prepare-seo",
+    "fetch:nec": "node scripts/fetch-nec-results.mjs --out data/latest.json",
+    "prepare-seo": "node scripts/prepare-seo.mjs"
+  },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0"
