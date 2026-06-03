@@ -318,14 +318,25 @@ section,
   font-size: 14px;
 }
 
+.selection-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 0 14px;
+  min-width: 0;
+}
+
 .election-tabs {
+  flex: 1 1 auto;
   display: flex;
   gap: 8px;
-  margin: 2px 0 14px;
+  margin: 0;
   padding-bottom: 3px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-gutter: stable;
+  min-width: 0;
 }
 
 .election-tab {
@@ -359,6 +370,29 @@ section,
 
 .election-tab.selected strong {
   background: rgba(255, 255, 255, 0.18);
+}
+
+.detail-control {
+  flex: 0 1 280px;
+  display: grid;
+  gap: 5px;
+  min-width: min(280px, 100%);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.detail-control select {
+  width: 100%;
+  min-height: 38px;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  color: var(--text);
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
 }
 
 .results-layout {
@@ -629,6 +663,16 @@ section,
   .button-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     min-width: 0;
+  }
+
+  .selection-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .detail-control {
+    flex-basis: auto;
+    width: 100%;
   }
 
   .broadcast-grid {

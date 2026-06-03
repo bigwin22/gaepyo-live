@@ -17,7 +17,7 @@
     <meta name="theme-color" content="#2f3437" />
     <link rel="canonical" href="https://bigwin22.github.io/gaepyo-live/" />
     <link rel="icon" href="data:," />
-    <link rel="manifest" href="./site.webmanifest" />
+    <link rel="manifest" href="./site.webmanifest?v=20260603-react-ui" />
     <link rel="sitemap" type="application/xml" href="./sitemap.xml" />
     <meta property="og:locale" content="ko_KR" />
     <meta property="og:type" content="website" />
@@ -74,62 +74,7 @@
     </script>
   </head>
   <body>
-    <header class="site-header">
-      <form class="search" id="region-search">
-        <label for="region-input">지역 검색</label>
-        <div class="search-row">
-          <input id="region-input" name="region" type="search" placeholder="예: 서울, 경기, 부산" />
-          <button type="submit">검색</button>
-        </div>
-      </form>
-      <div>
-        <p class="date">2026.06.03 제9회 전국동시지방선거</p>
-        <h1>지방선거 실시간 개표 허브</h1>
-      </div>
-    </header>
-
-    <main>
-      <section aria-labelledby="live-title">
-        <div class="section-title">
-          <h2 id="live-title">언론사 실시간 방송</h2>
-          <span>실시간 중계</span>
-        </div>
-        <div class="broadcast-grid" id="broadcast-grid"></div>
-      </section>
-
-      <section aria-labelledby="results-title">
-        <div class="section-title">
-          <h2 id="results-title">개표 상황</h2>
-          <div class="status-row">
-            <span id="source-status" class="status-pill warning">공식 데이터 갱신 대기</span>
-            <span id="updated-at">업데이트 대기</span>
-            <button id="refresh-data" class="small-button" type="button">새로고침</button>
-          </div>
-        </div>
-        <div class="national-grid" id="national-grid"></div>
-        <div class="election-tabs" id="election-tabs" aria-label="선거종류 선택"></div>
-        <div class="results-layout">
-          <aside class="region-list" id="region-list"></aside>
-          <div class="race-panel" id="race-panel">
-            <p class="muted">지역을 선택하면 후보 경합도가 표시됩니다.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="official-grid" aria-labelledby="official-title">
-        <div>
-          <h2 id="official-title">공식 확인</h2>
-          <p>선관위 실시간 개표 페이지와 공식 개표소 현황을 빠르게 엽니다.</p>
-        </div>
-        <div class="button-row">
-          <a class="button primary" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=VC&secondMenuId=VCCP09" target="_blank" rel="noreferrer">개표진행상황</a>
-          <a class="button" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=VC&secondMenuId=VCCP08" target="_blank" rel="noreferrer">개표단위별 결과</a>
-          <a class="button" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=BI&secondMenuId=BICP01" target="_blank" rel="noreferrer">공식 개표소 현황</a>
-          <a class="button" href="https://www.nec.go.kr/" target="_blank" rel="noreferrer">선관위</a>
-        </div>
-      </section>
-    </main>
-
-    <script src="./app.js?v=20260603-all-election"></script>
+    <div id="root"></div>
+    <script type="module" src="./app.js?v=20260603-react-ui"></script>
   </body>
 </html>
