@@ -195,7 +195,6 @@ function availableElectionsForSelectedRegion() {
 }
 
 function renderAll() {
-  renderBroadcasts();
   renderSourceStatus();
   renderNational();
   renderRegions(state.filter);

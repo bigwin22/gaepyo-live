@@ -149,6 +149,7 @@ main {
 
 section,
 .official-grid {
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
@@ -227,9 +228,11 @@ section,
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  min-width: 0;
 }
 
 .broadcast-card {
+  min-width: 0;
   min-height: 0;
   border: 1px solid var(--border);
   border-radius: 8px;

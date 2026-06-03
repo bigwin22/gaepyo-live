@@ -67,6 +67,7 @@ function parseArgs(values) {
     const value = values[i];
     if (value === "--out") parsed.out = values[++i];
     else if (value === "--fixture") parsed.fixture = values[++i];
+    else if (value === "--with-photos") parsed.withPhotos = true;
   }
   return parsed;
 }
@@ -94,9 +95,10 @@ async function buildFromNec() {
   const elections = [];
   const errors = [];
   const warnings = [];
+  const photoCache = args.withPhotos ? new Map() : await readPhotoCache(outputPath);
 
   for (const electionType of ELECTION_TYPES) {
-    const election = await collectElection(electionType, errors, warnings);
+    const election = await collectElection(electionType, errors, warnings, photoCache);
     elections.push(election);
   }
 
@@ -113,7 +115,7 @@ async function buildFromNec() {
   });
 }
 
-async function collectElection(electionType, errors, warnings) {
+async function collectElection(electionType, errors, warnings, photoCache) {
   const tasks = await buildFetchTasks(electionType);
   const results = await mapLimit(tasks, CONCURRENCY_LIMIT, async (task) => {
     try {
@@ -152,7 +154,7 @@ async function collectElection(electionType, errors, warnings) {
 
   let regions = CITY_CODES.map((city) => regionMap.get(city.code)).filter(Boolean);
 
-  if (electionType.primary) {
+  if (electionType.primary && args.withPhotos) {
     const photoEntries = await mapLimit(regions, CONCURRENCY_LIMIT, async (region) => {
       try {
         return [region.cityCode, await fetchCandidatePhotos(region.cityCode, electionType)];
@@ -164,6 +166,14 @@ async function collectElection(electionType, errors, warnings) {
     const photoMapByCity = new Map(photoEntries);
     regions = regions.map((region) => {
       const photoMap = photoMapByCity.get(region.cityCode) ?? new Map();
+      return {
+        ...region,
+        races: region.races.map((race) => attachCandidatePhotos(race, photoMap)),
+      };
+    });
+  } else if (electionType.primary && photoCache.size) {
+    regions = regions.map((region) => {
+      const photoMap = photoCache.get(region.cityCode) ?? new Map();
       return {
         ...region,
         races: region.races.map((race) => attachCandidatePhotos(race, photoMap)),
@@ -352,7 +362,10 @@ function parseVccp09Races(html, context) {
 
     const rateRow = rows[index + 1] ?? [];
     const parsed = buildRaceFromRows(candidateRow, cells, rateRow, context);
-    if (parsed) races.push(parsed);
+    if (parsed) {
+      races.push(parsed);
+      index += 1;
+    }
   }
 
   return races;
@@ -398,6 +411,40 @@ function parseCandidatePhotos(html) {
   return photos;
 }
 
+async function readPhotoCache(path) {
+  const cache = new Map();
+  try {
+    const payload = JSON.parse(await readFile(path, "utf8"));
+    const races = [
+      ...(payload.regions ?? []),
+      ...(payload.elections ?? []).flatMap((election) =>
+        (election.regions ?? []).flatMap((region) => region.races ?? []),
+      ),
+    ];
+
+    for (const race of races) {
+      const cityCode = race.cityCode;
+      if (!cityCode) continue;
+      const cityCache = cache.get(cityCode) ?? new Map();
+
+      for (const candidate of race.candidates ?? []) {
+        const photoUrl = candidatePhotoUrl(candidate);
+        const photoThumbnailUrl = candidate.photoThumbnailUrl ?? "";
+        if (!photoUrl && !photoThumbnailUrl) continue;
+        cityCache.set(candidateKey(candidate.name, candidate.party), {
+          photoUrl,
+          photoThumbnailUrl,
+        });
+      }
+
+      if (cityCache.size) cache.set(cityCode, cityCache);
+    }
+  } catch {
+    return cache;
+  }
+  return cache;
+}
+
 function cleanCell(value) {
   return decodeEntities(
     value
@@ -409,6 +456,10 @@ function cleanCell(value) {
       .replace(/[ \t\r\f\v]+/g, " ")
       .trim(),
   );
+}
+
+function candidatePhotoUrl(candidate) {
+  return candidate.photoUrl ?? candidate.photoThumbnailUrl ?? candidate.imageUrl ?? candidate.profileImage ?? "";
 }
 
 function decodeEntities(value) {
@@ -550,7 +601,7 @@ function buildPayload({ status, regions, educationRegions = [], elections = [], 
     },
     updatePolicy: {
       mode: "github-actions-scheduled",
-      expectedIntervalMinutes: 5,
+      expectedIntervalMinutes: 1,
       limitation: "GitHub Actions schedule은 지연될 수 있어 초 단위 실시간을 보장하지 않습니다.",
     },
     national,
