@@ -6,6 +6,20 @@
       "maxDuration": 60
     }
   },
+  "rewrites": [
+    {
+      "source": "/region/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/election/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/race/:path*",
+      "destination": "/"
+    }
+  ],
   "headers": [
     {
       "source": "/",
