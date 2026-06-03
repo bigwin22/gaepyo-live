@@ -50,10 +50,11 @@ const fallbackRegions = [
 const AUTO_REFRESH_SECONDS = 60;
 const ALL_RACES = "__all__";
 const LIVE_ENDPOINT = "./api/latest";
+const LIVE_REFRESH_ENDPOINT = "./api/latest?live=1";
 const STATIC_ENDPOINT = "./data/latest.json";
 const LOCAL_DATA_CACHE_KEY = "gaepyo-live:last-payload";
 const DATA_CACHE_BUCKET_MS = 60 * 1000;
-const LIVE_FETCH_TIMEOUT_MS = 8000;
+const LIVE_FETCH_TIMEOUT_MS = 30000;
 
 function App() {
   const [data, setData] = useState(null);
@@ -68,9 +69,13 @@ function App() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      const showCachedPayload = (payload) => {
+        setData(payload);
+        setLoading(false);
+      };
       setData(
         await fetchLatestData({
-          onCachedPayload: (payload) => setData(payload),
+          onCachedPayload: showCachedPayload,
         }),
       );
     } catch (error) {
@@ -592,7 +597,7 @@ async function fetchLatestData({ onCachedPayload } = {}) {
   }
 
   try {
-    const liveResponse = await fetchWithTimeout(LIVE_ENDPOINT, LIVE_FETCH_TIMEOUT_MS);
+    const liveResponse = await fetchWithTimeout(LIVE_REFRESH_ENDPOINT, LIVE_FETCH_TIMEOUT_MS);
     if (liveResponse.ok) {
       const payload = await liveResponse.json();
       writeCachedPayload(payload);
