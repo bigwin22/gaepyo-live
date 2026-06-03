@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bigwin22.github.io/gaepyo-live/sitemap.xml
