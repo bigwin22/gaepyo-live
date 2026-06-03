@@ -4,30 +4,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>지방선거 실시간 개표 허브</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css?v=20260603-live-video" />
   </head>
   <body>
     <header class="site-header">
+      <form class="search" id="region-search">
+        <label for="region-input">지역 검색</label>
+        <div class="search-row">
+          <input id="region-input" name="region" type="search" placeholder="예: 서울, 경기, 부산" />
+          <button type="submit">검색</button>
+        </div>
+      </form>
       <div>
         <p class="date">2026.06.03 제9회 전국동시지방선거</p>
         <h1>지방선거 실시간 개표 허브</h1>
       </div>
-      <form class="search" id="region-search">
-        <label for="region-input">지역 검색</label>
-        <input id="region-input" name="region" type="search" placeholder="예: 서울, 경기, 부산" />
-        <button type="submit">검색</button>
-      </form>
     </header>
 
     <main>
       <section class="official-grid" aria-labelledby="official-title">
         <div>
           <h2 id="official-title">공식 확인</h2>
-          <p>선관위 실시간 개표 페이지와 개표소 CCTV를 빠르게 엽니다.</p>
+          <p>선관위 실시간 개표 페이지와 공식 개표소 현황을 빠르게 엽니다.</p>
         </div>
         <div class="button-row">
           <a class="button primary" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=VC&secondMenuId=VCCP09" target="_blank" rel="noreferrer">개표진행상황</a>
           <a class="button" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=VC&secondMenuId=VCCP08" target="_blank" rel="noreferrer">개표단위별 결과</a>
+          <a class="button" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=BI&secondMenuId=BICP01" target="_blank" rel="noreferrer">공식 개표소 현황</a>
           <a class="button" href="https://www.nec.go.kr/" target="_blank" rel="noreferrer">선관위</a>
         </div>
       </section>
@@ -35,7 +39,7 @@
       <section aria-labelledby="live-title">
         <div class="section-title">
           <h2 id="live-title">언론사 실시간 방송</h2>
-          <span>최대 3개</span>
+          <span>실시간 중계</span>
         </div>
         <div class="broadcast-grid" id="broadcast-grid"></div>
       </section>
@@ -43,8 +47,13 @@
       <section aria-labelledby="results-title">
         <div class="section-title">
           <h2 id="results-title">개표 상황</h2>
-          <span id="updated-at">업데이트 대기</span>
+          <div class="status-row">
+            <span id="source-status" class="status-pill warning">공식 데이터 갱신 대기</span>
+            <span id="updated-at">업데이트 대기</span>
+            <button id="refresh-data" class="small-button" type="button">새로고침</button>
+          </div>
         </div>
+        <div class="national-grid" id="national-grid"></div>
         <div class="results-layout">
           <aside class="region-list" id="region-list"></aside>
           <div class="race-panel" id="race-panel">
@@ -54,6 +63,6 @@
       </section>
     </main>
 
-    <script src="./app.js"></script>
+    <script src="./app.js?v=20260603-autoplay"></script>
   </body>
 </html>
