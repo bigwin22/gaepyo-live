@@ -2,6 +2,7 @@
 
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const NEC_ENDPOINT = "https://info.nec.go.kr/electioninfo/electionInfo_report.xhtml";
 const ELECTION_ID = "0020260603";
@@ -42,23 +43,48 @@ const ELECTION_TYPES = [
 
 const CONCURRENCY_LIMIT = 8;
 
-const args = parseArgs(process.argv.slice(2));
-const outputPath = args.out ?? "data/latest.json";
-const generatedAt = new Date().toISOString();
+let generatedAt = new Date().toISOString();
+let runtimeOptions = {
+  outputPath: "data/latest.json",
+  withPhotos: false,
+};
 const sourceNote =
   "중앙선거관리위원회 선거통계시스템 electionInfo_report.xhtml VCCP09 POST 응답을 파싱한 준실시간 데이터";
 
-try {
-  const payload = args.fixture
-    ? await buildFromFixture(args.fixture)
-    : await buildFromNec();
-  await writeJson(outputPath, payload);
-  console.log(`Wrote ${outputPath}`);
-} catch (error) {
-  const fallback = buildErrorPayload(error);
-  await writeJson(outputPath, fallback);
-  console.error(error);
-  process.exitCode = 1;
+export async function buildLatestPayload(options = {}) {
+  generatedAt = new Date().toISOString();
+  runtimeOptions = {
+    outputPath: options.outputPath ?? options.photoCachePath ?? "data/latest.json",
+    withPhotos: Boolean(options.withPhotos),
+  };
+  return options.fixture ? buildFromFixture(options.fixture) : buildFromNec();
+}
+
+if (isCliEntry()) {
+  await main();
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const outputPath = args.out ?? "data/latest.json";
+  try {
+    const payload = await buildLatestPayload({
+      fixture: args.fixture,
+      outputPath,
+      withPhotos: args.withPhotos,
+    });
+    await writeJson(outputPath, payload);
+    console.log(`Wrote ${outputPath}`);
+  } catch (error) {
+    const fallback = buildErrorPayload(error);
+    await writeJson(outputPath, fallback);
+    console.error(error);
+    process.exitCode = 1;
+  }
+}
+
+function isCliEntry() {
+  return process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 }
 
 function parseArgs(values) {
@@ -95,7 +121,7 @@ async function buildFromNec() {
   const elections = [];
   const errors = [];
   const warnings = [];
-  const photoCache = args.withPhotos ? new Map() : await readPhotoCache(outputPath);
+  const photoCache = runtimeOptions.withPhotos ? new Map() : await readPhotoCache(runtimeOptions.outputPath);
 
   for (const electionType of ELECTION_TYPES) {
     const election = await collectElection(electionType, errors, warnings, photoCache);
@@ -154,7 +180,7 @@ async function collectElection(electionType, errors, warnings, photoCache) {
 
   let regions = CITY_CODES.map((city) => regionMap.get(city.code)).filter(Boolean);
 
-  if (electionType.primary && args.withPhotos) {
+  if (electionType.primary && runtimeOptions.withPhotos) {
     const photoEntries = await mapLimit(regions, CONCURRENCY_LIMIT, async (region) => {
       try {
         return [region.cityCode, await fetchCandidatePhotos(region.cityCode, electionType)];
