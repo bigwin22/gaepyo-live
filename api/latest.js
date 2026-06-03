@@ -7,6 +7,9 @@ export const config = {
 
 const RESPONSE_CACHE_SECONDS = 60;
 const STATIC_DATA_URL = new URL("../data/latest.json", import.meta.url);
+const LIVE_MEMORY_CACHE_MS = 60 * 1000;
+
+let livePayloadCache = null;
 
 export default async function handler(request, response) {
   if (request.method !== "GET") {
@@ -16,7 +19,21 @@ export default async function handler(request, response) {
   }
 
   try {
-    if (!isLiveRefreshRequest(request)) {
+    const liveRefreshRequest = isLiveRefreshRequest(request);
+    const cachedLivePayload = liveRefreshRequest ? readLivePayloadCache() : null;
+    if (cachedLivePayload) {
+      sendOk(response, {
+        ...cachedLivePayload,
+        delivery: {
+          ...(cachedLivePayload.delivery ?? {}),
+          mode: "serverless-live-memory-cache",
+          generatedBy: "api/latest.js",
+        },
+      });
+      return;
+    }
+
+    if (!liveRefreshRequest) {
       const staticPayload = await readStaticPayload();
       if (staticPayload) {
         sendOk(response, {
@@ -37,6 +54,7 @@ export default async function handler(request, response) {
       photoCachePayload,
       withPhotos: false,
     });
+    writeLivePayloadCache(payload);
 
     sendOk(response, {
       ...payload,
@@ -53,6 +71,19 @@ export default async function handler(request, response) {
       errors: [error?.message ?? String(error)],
     });
   }
+}
+
+function readLivePayloadCache() {
+  if (!livePayloadCache) return null;
+  if (Date.now() - livePayloadCache.cachedAt > LIVE_MEMORY_CACHE_MS) return null;
+  return livePayloadCache.payload;
+}
+
+function writeLivePayloadCache(payload) {
+  livePayloadCache = {
+    cachedAt: Date.now(),
+    payload,
+  };
 }
 
 function sendOk(response, payload) {
