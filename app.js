@@ -455,6 +455,7 @@ function ResultsSection({
         </div>
       </div>
       <${NationalGrid} data=${data} regions=${regions} />
+      <${SeatSharePanel} selectedElection=${selectedElection} />
       <div className="selection-bar">
         <${ElectionTabs}
           availableElections=${availableElections}
@@ -584,6 +585,47 @@ function RegionList({ regions, selectedCode, filter, setFilter, chooseRegion }) 
           </button>
         `;
       })}
+    </aside>
+  `;
+}
+
+function SeatSharePanel({ selectedElection }) {
+  const seatShare = useMemo(() => buildSeatShare(selectedElection), [selectedElection]);
+
+  if (!selectedElection) return null;
+
+  return html`
+    <aside className="seat-share-panel" aria-labelledby="seat-share-title">
+      <div className="seat-share-heading">
+        <div>
+          <p className="eyebrow">${selectedElection.shortName ?? selectedElection.name}</p>
+          <h3 id="seat-share-title">전국 정당별 우세 비율</h3>
+        </div>
+        ${seatShare.total
+          ? html`<span className="seat-share-total">${formatNumber(seatShare.total)}곳</span>`
+          : null}
+      </div>
+
+      ${seatShare.items.length
+        ? html`
+            <div className="seat-share-stack">
+              ${seatShare.items.map(
+                (item) => html`
+                  <div className="seat-share-row" key=${item.party} style=${{ "--party-color": partyColor(item.party) }}>
+                    <div className="seat-share-label">
+                      <strong>${item.party}</strong>
+                      <span>${formatNumber(item.count)}곳 · ${formatRate(item.rate)}</span>
+                    </div>
+                    <div className="seat-share-track" aria-hidden="true">
+                      <span style=${{ width: `${Math.max(2, Math.min(100, item.rate))}%` }} />
+                    </div>
+                  </div>
+                `,
+              )}
+            </div>
+            <p className="seat-share-note">공식 득표 데이터의 현재 1위 기준입니다. 최종 당선 확정 결과와 다를 수 있습니다.</p>
+          `
+        : html`<p className="notice">정당별 우세 비율을 계산할 수 있는 데이터가 아직 없습니다.</p>`}
     </aside>
   `;
 }
@@ -908,6 +950,39 @@ function dataElections(data) {
   ];
 }
 
+function buildSeatShare(election) {
+  if (!election || election.code === "11") return { total: 0, items: [] };
+
+  const counts = new Map();
+  let total = 0;
+
+  for (const region of election.regions ?? []) {
+    const races = region.races ?? [];
+    const aggregateRaces = races.filter(isAggregateRace);
+    const targetRaces = aggregateRaces.length ? aggregateRaces : races.filter((race) => !isAggregateRace(race));
+
+    for (const race of targetRaces) {
+      const leader = race.leader;
+      if (!leader?.party || !leader?.name) continue;
+      if (Number(leader.votes || 0) <= 0 && Number(leader.rate || 0) <= 0) continue;
+
+      const party = leader.party.trim();
+      counts.set(party, (counts.get(party) ?? 0) + 1);
+      total += 1;
+    }
+  }
+
+  const items = [...counts.entries()]
+    .map(([party, count]) => ({
+      party,
+      count,
+      rate: total ? (count / total) * 100 : 0,
+    }))
+    .sort((a, b) => b.count - a.count || koreanSorter.compare(a.party, b.party));
+
+  return { total, items };
+}
+
 function sortByKoreanName(items, getName) {
   return [...items].sort((a, b) => koreanSorter.compare(String(getName(a) ?? ""), String(getName(b) ?? "")));
 }
@@ -1073,6 +1148,10 @@ function formatRate(value) {
 
 function isSubtotalRace(race) {
   return race?.unitName?.replace(/\s+/g, "") === "소계";
+}
+
+function isAggregateRace(race) {
+  return ["소계", "합계"].includes(race?.unitName?.replace(/\s+/g, ""));
 }
 
 function partyColor(party = "") {
