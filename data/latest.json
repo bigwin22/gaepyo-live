@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "status": "initial",
+  "generatedAt": "2026-06-03T00:00:00.000Z",
+  "electionId": "0020260603",
+  "source": {
+    "name": "중앙선거관리위원회 선거통계시스템",
+    "endpoint": "https://info.nec.go.kr/electioninfo/electionInfo_report.xhtml",
+    "method": "POST",
+    "menuId": "VCCP09",
+    "note": "GitHub Actions가 선관위 VCCP09 POST 응답을 파싱해 갱신합니다.",
+    "verified": false
+  },
+  "updatePolicy": {
+    "mode": "github-actions-scheduled",
+    "expectedIntervalMinutes": 5,
+    "limitation": "GitHub Actions schedule은 지연될 수 있어 초 단위 실시간을 보장하지 않습니다."
+  },
+  "national": {
+    "regionCount": 0,
+    "reportingRegions": 0,
+    "averageCountingRate": 0,
+    "totalVotes": 0,
+    "validVotes": 0,
+    "invalidVotes": 0,
+    "electorateCounted": 0
+  },
+  "regions": [],
+  "educationRegions": [],
+  "errors": [
+    "공식 데이터 갱신 대기 중입니다. Actions 수동 실행 또는 다음 schedule 후 data/latest.json이 갱신됩니다."
+  ]
+}

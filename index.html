@@ -8,15 +8,17 @@
   </head>
   <body>
     <header class="site-header">
+      <form class="search" id="region-search">
+        <label for="region-input">지역 검색</label>
+        <div class="search-row">
+          <input id="region-input" name="region" type="search" placeholder="예: 서울, 경기, 부산" />
+          <button type="submit">검색</button>
+        </div>
+      </form>
       <div>
         <p class="date">2026.06.03 제9회 전국동시지방선거</p>
         <h1>지방선거 실시간 개표 허브</h1>
       </div>
-      <form class="search" id="region-search">
-        <label for="region-input">지역 검색</label>
-        <input id="region-input" name="region" type="search" placeholder="예: 서울, 경기, 부산" />
-        <button type="submit">검색</button>
-      </form>
     </header>
 
     <main>
@@ -28,6 +30,7 @@
         <div class="button-row">
           <a class="button primary" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=VC&secondMenuId=VCCP09" target="_blank" rel="noreferrer">개표진행상황</a>
           <a class="button" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=VC&secondMenuId=VCCP08" target="_blank" rel="noreferrer">개표단위별 결과</a>
+          <a class="button" href="https://info.nec.go.kr/main/showDocument.xhtml?electionId=0020260603&topMenuId=BI&secondMenuId=BICP01" target="_blank" rel="noreferrer">개표소/CCTV 확인</a>
           <a class="button" href="https://www.nec.go.kr/" target="_blank" rel="noreferrer">선관위</a>
         </div>
       </section>
@@ -43,8 +46,13 @@
       <section aria-labelledby="results-title">
         <div class="section-title">
           <h2 id="results-title">개표 상황</h2>
-          <span id="updated-at">업데이트 대기</span>
+          <div class="status-row">
+            <span id="source-status" class="status-pill warning">공식 데이터 갱신 대기</span>
+            <span id="updated-at">업데이트 대기</span>
+            <button id="refresh-data" class="small-button" type="button">새로고침</button>
+          </div>
         </div>
+        <div class="national-grid" id="national-grid"></div>
         <div class="results-layout">
           <aside class="region-list" id="region-list"></aside>
           <div class="race-panel" id="race-panel">
