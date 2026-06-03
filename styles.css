@@ -1,0 +1,192 @@
+:root {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-subtle: #eef2f7;
+  --text: #111827;
+  --muted: #667085;
+  --border: #d9e0ea;
+  --blue: #2563eb;
+  --red: #dc2626;
+  --green: #17803d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+.site-header,
+main {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.site-header {
+  display: grid;
+  grid-template-columns: 1fr minmax(320px, 440px);
+  gap: 24px;
+  align-items: end;
+  padding: 28px 0 18px;
+}
+
+.date,
+.muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.15;
+}
+
+h2 {
+  margin-bottom: 8px;
+  font-size: 21px;
+}
+
+.search {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.search label {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+input,
+button,
+.button {
+  min-height: 42px;
+  border-radius: 8px;
+  font: inherit;
+}
+
+input {
+  width: 100%;
+  border: 1px solid var(--border);
+  padding: 0 13px;
+}
+
+button,
+.button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0 14px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.primary {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: white;
+}
+
+main {
+  display: grid;
+  gap: 18px;
+  padding-bottom: 40px;
+}
+
+section,
+.official-grid {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 18px;
+}
+
+.official-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.button-row,
+.section-title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.broadcast-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.broadcast-card {
+  min-height: 150px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+  padding: 14px;
+}
+
+.results-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 14px;
+}
+
+.region-list {
+  display: grid;
+  gap: 8px;
+}
+
+.region-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  padding: 12px;
+  text-align: left;
+}
+
+.race-panel {
+  min-height: 220px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+@media (max-width: 860px) {
+  .site-header,
+  .official-grid,
+  .results-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .broadcast-grid {
+    grid-template-columns: 1fr;
+  }
+}
