@@ -53,6 +53,7 @@ const LIVE_ENDPOINT = "/api/latest";
 const LIVE_REFRESH_ENDPOINT = "/api/latest?live=1";
 const STATIC_ENDPOINT = "/data/latest.json";
 const LOCAL_DATA_CACHE_KEY = "gaepyo-live:last-payload";
+const DEFAULT_REGION_CODE = "1100";
 const DATA_CACHE_BUCKET_MS = 60 * 1000;
 const LIVE_FETCH_TIMEOUT_MS = 55000;
 const koreanSorter = new Intl.Collator("ko-KR", { sensitivity: "base", numeric: true });
@@ -91,7 +92,7 @@ const ELECTION_CODES_BY_SLUG = invertRecord(ELECTION_SLUGS);
 
 function App() {
   const [data, setData] = useState(null);
-  const [selectedCode, setSelectedCode] = useState(null);
+  const [selectedCode, setSelectedCode] = useState(DEFAULT_REGION_CODE);
   const [selectedElectionCode, setSelectedElectionCode] = useState("3");
   const [selectedRaceKey, setSelectedRaceKey] = useState(ALL_RACES);
   const [filter, setFilter] = useState("");
@@ -153,8 +154,9 @@ function App() {
       return;
     }
     if (regions.some((region) => region.cityCode === selectedCode)) return;
+    const defaultRegion = regions.find((region) => region.cityCode === DEFAULT_REGION_CODE);
     const firstReportingRegion = regions.find(hasRaceData);
-    setSelectedCode((firstReportingRegion ?? regions[0])?.cityCode ?? null);
+    setSelectedCode((defaultRegion ?? firstReportingRegion ?? regions[0])?.cityCode ?? null);
   }, [regions, routeRequest.regionCode, selectedCode]);
 
   const selectedRegion = useMemo(
@@ -246,6 +248,8 @@ function App() {
   useEffect(() => {
     if (!selectedRegion || !selectedElection) return;
     if (!hasRouteRequest(routeRequest)) return;
+    if (routeRequest.regionCode && selectedRegion.cityCode !== routeRequest.regionCode) return;
+    if (routeRequest.electionCode && selectedElection.code !== routeRequest.electionCode) return;
     const selectedRace = selectedRaceKey === ALL_RACES ? null : races.find((race) => race.raceKey === selectedRaceKey);
     replaceRouteForSelection(selectedRegion, selectedElection, selectedRace);
   }, [races, routeRequest, selectedElection, selectedRaceKey, selectedRegion]);
