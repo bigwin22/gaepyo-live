@@ -332,6 +332,7 @@ function App() {
 
       <${OfficialLinks} />
     </main>
+    <${SiteFooter} />
     <${Analytics} />
     <${SpeedInsights} />
   `;
@@ -383,7 +384,7 @@ const BroadcastTabs = memo(function BroadcastTabs() {
       >
         <span>
           <strong>언론사 방송 보기</strong>
-          <small>${isOpen ? "선택한 방송을 재생 중입니다" : "탭을 열어 원하는 방송을 선택하세요"}</small>
+          <small>방송 목록은 시청 편의를 위해 제공되며, 특정 언론사나 정치적 입장을 지지하지 않습니다.</small>
         </span>
         <span className="broadcast-toggle-indicator" aria-hidden="true" />
       </button>
@@ -469,6 +470,7 @@ function ResultsSection({
         </div>
       </div>
       <${NationalGrid} data=${data} regions=${regions} />
+      <${SeatSharePanel} selectedElection=${selectedElection} />
       <div className="selection-bar">
         <${ElectionTabs}
           availableElections=${availableElections}
@@ -602,6 +604,47 @@ function RegionList({ regions, selectedCode, filter, setFilter, chooseRegion }) 
   `;
 }
 
+function SeatSharePanel({ selectedElection }) {
+  const seatShare = useMemo(() => buildSeatShare(selectedElection), [selectedElection]);
+
+  if (!selectedElection) return null;
+
+  return html`
+    <aside className="seat-share-panel" aria-labelledby="seat-share-title">
+      <div className="seat-share-heading">
+        <div>
+          <p className="eyebrow">${selectedElection.shortName ?? selectedElection.name}</p>
+          <h3 id="seat-share-title">전국 정당별 우세 비율</h3>
+        </div>
+        ${seatShare.total
+          ? html`<span className="seat-share-total">${formatNumber(seatShare.total)}곳</span>`
+          : null}
+      </div>
+
+      ${seatShare.items.length
+        ? html`
+            <div className="seat-share-stack">
+              ${seatShare.items.map(
+                (item) => html`
+                  <div className="seat-share-row" key=${item.party} style=${{ "--party-color": partyColor(item.party) }}>
+                    <div className="seat-share-label">
+                      <strong>${item.party}</strong>
+                      <span>${formatNumber(item.count)}곳 · ${formatRate(item.rate)}</span>
+                    </div>
+                    <div className="seat-share-track" aria-hidden="true">
+                      <span style=${{ width: `${Math.max(2, Math.min(100, item.rate))}%` }} />
+                    </div>
+                  </div>
+                `,
+              )}
+            </div>
+            <p className="seat-share-note">공식 득표 데이터의 현재 1위 기준입니다. 최종 당선 확정 결과와 다를 수 있습니다.</p>
+          `
+        : html`<p className="notice">정당별 우세 비율을 계산할 수 있는 데이터가 아직 없습니다.</p>`}
+    </aside>
+  `;
+}
+
 function RacePanel({ selectedRegion, selectedElection, races, visibleRaces, selectedRaceKey, filter }) {
   if (!selectedRegion && !races.length) {
     return html`<div className="race-panel"><p className="muted">지역 데이터가 아직 없습니다.</p></div>`;
@@ -719,6 +762,16 @@ function OfficialLinks() {
         <a className="button" href="https://www.nec.go.kr/" target="_blank" rel="noreferrer">선관위</a>
       </div>
     </section>
+  `;
+}
+
+function SiteFooter() {
+  return html`
+    <footer className="site-footer">
+      <p>© 2026 gubiko. All rights reserved.</p>
+      <p>정보 소스: 중앙선거관리위원회 실시간 개표 자료</p>
+      <p>방송 목록은 시청 편의를 위해 제공되며, 특정 언론사나 정치적 입장을 지지하지 않습니다.</p>
+    </footer>
   `;
 }
 
@@ -910,6 +963,39 @@ function dataElections(data) {
       ),
     },
   ];
+}
+
+function buildSeatShare(election) {
+  if (!election || election.code === "11") return { total: 0, items: [] };
+
+  const counts = new Map();
+  let total = 0;
+
+  for (const region of election.regions ?? []) {
+    const races = region.races ?? [];
+    const aggregateRaces = races.filter(isAggregateRace);
+    const targetRaces = aggregateRaces.length ? aggregateRaces : races.filter((race) => !isAggregateRace(race));
+
+    for (const race of targetRaces) {
+      const leader = race.leader;
+      if (!leader?.party || !leader?.name) continue;
+      if (Number(leader.votes || 0) <= 0 && Number(leader.rate || 0) <= 0) continue;
+
+      const party = leader.party.trim();
+      counts.set(party, (counts.get(party) ?? 0) + 1);
+      total += 1;
+    }
+  }
+
+  const items = [...counts.entries()]
+    .map(([party, count]) => ({
+      party,
+      count,
+      rate: total ? (count / total) * 100 : 0,
+    }))
+    .sort((a, b) => b.count - a.count || koreanSorter.compare(a.party, b.party));
+
+  return { total, items };
 }
 
 function sortByKoreanName(items, getName) {
@@ -1133,6 +1219,10 @@ function formatRate(value) {
 
 function isSubtotalRace(race) {
   return race?.unitName?.replace(/\s+/g, "") === "소계";
+}
+
+function isAggregateRace(race) {
+  return ["소계", "합계"].includes(race?.unitName?.replace(/\s+/g, ""));
 }
 
 function partyColor(party = "") {

@@ -30,7 +30,8 @@ a {
 }
 
 .site-header,
-main {
+main,
+.site-footer {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
 }
@@ -498,6 +499,102 @@ section,
   font-size: 14px;
 }
 
+.seat-share-panel {
+  min-width: 0;
+  margin: -4px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fbfbfa;
+  padding: 14px;
+}
+
+.seat-share-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.seat-share-heading h3 {
+  margin-bottom: 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.seat-share-total {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: white;
+  padding: 0 10px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.seat-share-stack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.seat-share-row {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  padding: 11px;
+}
+
+.seat-share-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.seat-share-label strong,
+.seat-share-label span {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.seat-share-label span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.seat-share-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+}
+
+.seat-share-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--party-color);
+}
+
+.seat-share-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .selection-bar {
   display: flex;
   gap: 10px;
@@ -824,6 +921,21 @@ section,
   background: var(--party-color);
 }
 
+.site-footer {
+  display: grid;
+  gap: 6px;
+  padding: 0 0 28px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  justify-items: center;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
 @media (max-width: 860px) {
   .site-header {
     grid-template-columns: 1fr;
@@ -857,7 +969,8 @@ section,
 
   .national-grid,
   .seo-metrics,
-  .race-summary {
+  .race-summary,
+  .seat-share-stack {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -874,6 +987,7 @@ section,
 @media (max-width: 430px) {
   .site-header,
   main,
+  .site-footer,
   .seo-shell {
     width: min(100% - 20px, 1180px);
   }
@@ -898,13 +1012,16 @@ section,
   .button-row,
   .national-grid,
   .seo-metrics,
-  .race-summary {
+  .race-summary,
+  .seat-share-stack {
     grid-template-columns: 1fr;
   }
 
   .section-title,
   .status-row,
-  .race-heading {
+  .race-heading,
+  .seat-share-heading,
+  .seat-share-label {
     align-items: stretch;
     flex-direction: column;
   }
