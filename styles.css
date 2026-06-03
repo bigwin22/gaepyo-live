@@ -378,12 +378,17 @@ section,
   display: grid;
   gap: 12px;
   width: min(100%, 680px);
+  margin-inline: auto;
   min-width: 0;
+  justify-self: center;
+  justify-items: center;
 }
 
 .broadcast-tablist {
   display: flex;
   gap: 8px;
+  justify-content: center;
+  width: 100%;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   padding-bottom: 3px;
@@ -407,6 +412,7 @@ section,
 }
 
 .broadcast-card {
+  width: 100%;
   min-width: 0;
   min-height: 0;
   border: 1px solid var(--border);

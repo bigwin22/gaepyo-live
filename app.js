@@ -56,6 +56,7 @@ const LOCAL_DATA_CACHE_KEY = "gaepyo-live:last-payload";
 const DATA_CACHE_BUCKET_MS = 60 * 1000;
 const LIVE_FETCH_TIMEOUT_MS = 55000;
 const koreanSorter = new Intl.Collator("ko-KR", { sensitivity: "base", numeric: true });
+const SITE_URL = "https://vote.gubiko.com";
 const REGION_SLUGS = {
   "1100": "seoul",
   "2600": "busan",
@@ -249,15 +250,29 @@ function App() {
     replaceRouteForSelection(selectedRegion, selectedElection, selectedRace);
   }, [races, routeRequest, selectedElection, selectedRaceKey, selectedRegion]);
 
+  useEffect(() => {
+    const selectedRace = selectedRaceKey === ALL_RACES ? null : races.find((race) => race.raceKey === selectedRaceKey);
+    updateRouteSeo({
+      region: selectedRegion,
+      election: selectedElection,
+      race: selectedRace,
+      national: data?.national,
+      generatedAt: data?.generatedAt,
+    });
+  }, [data?.generatedAt, data?.national, races, selectedElection, selectedRaceKey, selectedRegion]);
+
   const chooseRegion = useCallback(
     (cityCode) => {
       setSelectedCode(cityCode);
       setSelectedRaceKey(ALL_RACES);
       setRouteRequest((current) => ({ ...current, regionCode: cityCode, raceSlug: null }));
       const region = regions.find((item) => item.cityCode === cityCode);
-      if (region && selectedElection) replaceRouteForSelection(region, selectedElection, null);
+      const election =
+        selectedElection ??
+        availableElections.find(({ election: item }) => item.code === selectedElectionCode)?.election ?? { code: selectedElectionCode };
+      if (region && election) replaceRouteForSelection(region, election, null);
     },
-    [regions, selectedElection],
+    [availableElections, regions, selectedElection, selectedElectionCode],
   );
 
   const chooseElection = useCallback(
@@ -1053,6 +1068,62 @@ function raceSlug(race) {
     .map((part) => String(part).toLowerCase().replace(/[^a-z0-9-]/g, ""))
     .filter(Boolean)
     .join("-");
+}
+
+function updateRouteSeo({ region, election, race, national, generatedAt }) {
+  const path = routePath(region, election, race);
+  const canonicalUrl = `${SITE_URL}${path === "/" ? "/" : path}`;
+  const title = buildRouteTitle(region, election, race);
+  const description = buildRouteDescription({ region, election, race, national, generatedAt });
+
+  document.title = title;
+  setMetaContent("description", description);
+  setMetaContent("twitter:title", title);
+  setMetaContent("twitter:description", description);
+  setMetaProperty("og:title", title);
+  setMetaProperty("og:description", description);
+  setMetaProperty("og:url", canonicalUrl);
+  setLinkHref("canonical", canonicalUrl);
+}
+
+function buildRouteTitle(region, election, race) {
+  if (region?.cityName && election?.shortName && race?.unitName) {
+    return `${region.cityName} ${race.unitName} ${election.shortName} 실시간 개표율 | 개표라이브`;
+  }
+  if (region?.cityName && election?.shortName) {
+    return `${region.cityName} ${election.shortName} 실시간 개표율 | 개표라이브`;
+  }
+  if (region?.cityName) return `${region.cityName} 지방선거 실시간 개표율 | 개표라이브`;
+  return "2026 지방선거 실시간 개표율 | 지역별 후보 우세율·개표방송";
+}
+
+function buildRouteDescription({ region, election, race, national, generatedAt }) {
+  const timeText = generatedAt ? formatGeneratedAt(generatedAt) : "실시간 기준";
+  const rateText = national?.averageCountingRate == null ? "" : ` 전국 평균 개표율 ${formatRate(national.averageCountingRate)}.`;
+  const raceText = race?.unitName ? ` ${race.unitName} 선거구의 후보별 득표율과 표차를 확인하세요.` : "";
+  if (region?.cityName && election?.shortName) {
+    return `${timeText} ${region.cityName} ${election.shortName} 개표 상황입니다.${raceText} 선관위 공식 개표 데이터 기반으로 1분마다 갱신됩니다.`;
+  }
+  return `${timeText} 2026 지방선거 실시간 개표율과 지역별 후보 우세율입니다.${rateText} 선관위 공식 개표 데이터 기반으로 1분마다 갱신됩니다.`;
+}
+
+function setMetaContent(name, content) {
+  const element = document.querySelector(`meta[name="${cssEscape(name)}"]`);
+  if (element) element.setAttribute("content", content);
+}
+
+function setMetaProperty(property, content) {
+  const element = document.querySelector(`meta[property="${cssEscape(property)}"]`);
+  if (element) element.setAttribute("content", content);
+}
+
+function setLinkHref(rel, href) {
+  const element = document.querySelector(`link[rel="${cssEscape(rel)}"]`);
+  if (element) element.setAttribute("href", href);
+}
+
+function cssEscape(value) {
+  return String(value).replace(/["\\]/g, "\\$&");
 }
 
 function hashSlug(value) {
