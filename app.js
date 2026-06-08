@@ -47,15 +47,11 @@ const fallbackRegions = [
   { cityCode: "4900", cityName: "제주특별자치도", shortName: "제주" },
 ];
 
-const AUTO_REFRESH_SECONDS = 60;
 const ALL_RACES = "__all__";
-const LIVE_ENDPOINT = "/api/latest";
-const LIVE_REFRESH_ENDPOINT = "/api/latest?live=1";
 const STATIC_ENDPOINT = "/data/latest.json";
 const LOCAL_DATA_CACHE_KEY = "gaepyo-live:last-payload";
 const DEFAULT_REGION_CODE = "1100";
 const DATA_CACHE_BUCKET_MS = 60 * 1000;
-const LIVE_FETCH_TIMEOUT_MS = 55000;
 const koreanSorter = new Intl.Collator("ko-KR", { sensitivity: "base", numeric: true });
 const SITE_URL = "https://vote.gubiko.com";
 const REGION_SLUGS = {
@@ -132,8 +128,6 @@ function App() {
 
   useEffect(() => {
     loadData();
-    const timer = window.setInterval(loadData, AUTO_REFRESH_SECONDS * 1000);
-    return () => window.clearInterval(timer);
   }, [loadData]);
 
   useEffect(() => {
@@ -851,41 +845,7 @@ async function fetchLatestData({ onCachedPayload } = {}) {
     if (!staticPayload) throw new Error("cached data unavailable");
   }
 
-  if (isGitHubPagesHost()) {
-    return staticPayload;
-  }
-
-  try {
-    const liveResponse = await fetchWithTimeout(LIVE_REFRESH_ENDPOINT, LIVE_FETCH_TIMEOUT_MS);
-    if (liveResponse.ok) {
-      const payload = await liveResponse.json();
-      writeCachedPayload(payload);
-      return payload;
-    }
-
-    const contentType = liveResponse.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html")) {
-      throw new Error(`/api/latest HTTP ${liveResponse.status}`);
-    }
-  } catch (error) {
-    return {
-      ...staticPayload,
-      delivery: {
-        ...(staticPayload.delivery ?? {}),
-        mode: staticPayload.delivery?.mode ?? "static-fallback",
-        reason: error?.message ?? "live API unavailable",
-      },
-    };
-  }
-
-  return {
-    ...staticPayload,
-    delivery: {
-      ...(staticPayload.delivery ?? {}),
-      mode: staticPayload.delivery?.mode ?? "static-fallback",
-      reason: "live API unavailable on static hosting",
-    },
-  };
+  return staticPayload;
 }
 
 async function fetchStaticData(cacheBust, reason) {
@@ -899,19 +859,6 @@ async function fetchStaticData(cacheBust, reason) {
       reason,
     },
   };
-}
-
-async function fetchWithTimeout(url, timeoutMs) {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, {
-      cache: "default",
-      signal: controller.signal,
-    });
-  } finally {
-    window.clearTimeout(timeout);
-  }
 }
 
 function readCachedPayload() {
@@ -939,10 +886,6 @@ function writeCachedPayload(payload) {
   } catch {
     // Ignore storage failures; network/static cache still keeps the page usable.
   }
-}
-
-function isGitHubPagesHost() {
-  return window.location.hostname.endsWith(".github.io");
 }
 
 function dataElections(data) {
