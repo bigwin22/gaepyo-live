@@ -1,5 +1,4 @@
 import { readFile } from "node:fs/promises";
-import { buildLatestPayload } from "../scripts/fetch-nec-results.mjs";
 
 export const config = {
   maxDuration: 60,
@@ -7,10 +6,6 @@ export const config = {
 
 const RESPONSE_CACHE_SECONDS = 60;
 const STATIC_DATA_URL = new URL("../data/latest.json", import.meta.url);
-const LIVE_MEMORY_CACHE_MS = 60 * 1000;
-
-let livePayloadCache = null;
-
 export default async function handler(request, response) {
   if (request.method !== "GET") {
     response.setHeader("Allow", "GET");
@@ -19,47 +14,14 @@ export default async function handler(request, response) {
   }
 
   try {
-    const liveRefreshRequest = isLiveRefreshRequest(request);
-    const cachedLivePayload = liveRefreshRequest ? readLivePayloadCache() : null;
-    if (cachedLivePayload) {
-      sendOk(response, {
-        ...cachedLivePayload,
-        delivery: {
-          ...(cachedLivePayload.delivery ?? {}),
-          mode: "serverless-live-memory-cache",
-          generatedBy: "api/latest.js",
-        },
-      });
-      return;
-    }
-
-    if (!liveRefreshRequest) {
-      const staticPayload = await readStaticPayload();
-      if (staticPayload) {
-        sendOk(response, {
-          ...staticPayload,
-          delivery: {
-            ...(staticPayload.delivery ?? {}),
-            mode: "serverless-static-cache",
-            generatedBy: "api/latest.js",
-          },
-        });
-        return;
-      }
-    }
-
-    const photoCachePayload = await fetchPhotoCachePayload(request);
-    const payload = await buildLatestPayload({
-      outputPath: "data/latest.json",
-      photoCachePayload,
-      withPhotos: false,
-    });
-    writeLivePayloadCache(payload);
+    const staticPayload = await readStaticPayload();
+    if (!staticPayload) throw new Error("static data unavailable");
 
     sendOk(response, {
-      ...payload,
+      ...staticPayload,
       delivery: {
-        mode: "serverless-live",
+        ...(staticPayload.delivery ?? {}),
+        mode: "serverless-static-cache",
         generatedBy: "api/latest.js",
       },
     });
@@ -73,19 +35,6 @@ export default async function handler(request, response) {
   }
 }
 
-function readLivePayloadCache() {
-  if (!livePayloadCache) return null;
-  if (Date.now() - livePayloadCache.cachedAt > LIVE_MEMORY_CACHE_MS) return null;
-  return livePayloadCache.payload;
-}
-
-function writeLivePayloadCache(payload) {
-  livePayloadCache = {
-    cachedAt: Date.now(),
-    payload,
-  };
-}
-
 function sendOk(response, payload) {
   response.setHeader(
     "Cache-Control",
@@ -95,36 +44,9 @@ function sendOk(response, payload) {
   response.status(200).json(payload);
 }
 
-function isLiveRefreshRequest(request) {
-  try {
-    const host = request.headers?.["x-forwarded-host"] ?? request.headers?.host ?? "localhost";
-    const protocol = request.headers?.["x-forwarded-proto"] ?? "https";
-    const url = new URL(request.url, `${protocol}://${host}`);
-    return url.searchParams.get("live") === "1";
-  } catch {
-    return false;
-  }
-}
-
 async function readStaticPayload() {
   try {
     return JSON.parse(await readFile(STATIC_DATA_URL, "utf8"));
-  } catch {
-    return null;
-  }
-}
-
-async function fetchPhotoCachePayload(request) {
-  try {
-    const host = request.headers?.["x-forwarded-host"] ?? request.headers?.host;
-    if (!host) return null;
-
-    const protocol = request.headers?.["x-forwarded-proto"] ?? "https";
-    const response = await fetch(`${protocol}://${host}/data/latest.json`, {
-      cache: "no-store",
-    });
-    if (!response.ok) return null;
-    return response.json();
   } catch {
     return null;
   }
